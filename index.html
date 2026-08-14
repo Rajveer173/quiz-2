@@ -1,0 +1,1105 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DL &amp; GenAI — Quiz 2 Trainer</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --ink:#101C29;
+  --ink2:#43596E;
+  --ink3:#7C8FA0;
+  --paper:#FFFFFF;
+  --ground:#E7ECEF;
+  --rule:#CFD9E0;
+  --teal:#1B6B62;
+  --teal-soft:#E4F0EE;
+  --ochre:#A8700F;
+  --ochre-soft:#FBF0DC;
+  --crimson:#AF382D;
+  --crimson-soft:#FAE7E4;
+  --indigo:#3A3B72;
+  --indigo-soft:#ECEDF7;
+  --shadow:0 1px 2px rgba(16,28,41,.06),0 8px 24px rgba(16,28,41,.06);
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --disp:"Space Grotesk","IBM Plex Sans",-apple-system,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--ground);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:16px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ---------- shell ---------- */
+.shell{display:flex;min-height:100vh;align-items:flex-start}
+
+/* ---------- sidebar ---------- */
+.rail{
+  width:288px;flex:0 0 288px;
+  position:sticky;top:0;height:100vh;
+  background:var(--ink);
+  color:#DCE5EC;
+  display:flex;flex-direction:column;
+  overflow:hidden;
+}
+.rail-head{padding:26px 24px 18px;border-bottom:1px solid rgba(255,255,255,.1)}
+.rail-eyebrow{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;
+  text-transform:uppercase;color:#7FA8A2;margin:0 0 8px;
+}
+.rail-title{
+  font-family:var(--disp);font-weight:700;font-size:21px;line-height:1.15;
+  letter-spacing:-.015em;color:#fff;margin:0;
+}
+.rail-sub{font-size:12.5px;color:#8FA3B4;margin:6px 0 0;line-height:1.45}
+
+/* target meter — signature element */
+.meter{padding:18px 24px 20px;border-bottom:1px solid rgba(255,255,255,.1)}
+.meter-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px}
+.meter-label{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#8FA3B4}
+.meter-pct{font-family:var(--disp);font-weight:700;font-size:22px;color:#fff;letter-spacing:-.02em}
+.meter-track{position:relative;height:9px;background:rgba(255,255,255,.11);border-radius:0}
+.meter-fill{height:100%;background:#3FA394;width:0%;transition:width .5s cubic-bezier(.2,.7,.3,1)}
+.meter-fill.hit{background:#6FD9C4}
+.meter-mark{position:absolute;top:-5px;bottom:-5px;left:95%;width:2px;background:#E8B54B}
+.meter-mark::after{
+  content:"95";position:absolute;top:-15px;left:50%;transform:translateX(-50%);
+  font-family:var(--mono);font-size:9.5px;color:#E8B54B;letter-spacing:.05em;
+}
+.meter-note{font-family:var(--mono);font-size:10.5px;color:#7C93A6;margin-top:12px;letter-spacing:.02em}
+
+.rail-nav{flex:1;overflow-y:auto;padding:10px 0 24px}
+.navitem{
+  display:flex;align-items:center;gap:11px;width:100%;
+  background:none;border:0;text-align:left;cursor:pointer;
+  padding:9px 24px;color:#B6C6D3;font-family:var(--sans);font-size:14px;
+  border-left:3px solid transparent;transition:background .12s,color .12s;
+}
+.navitem:hover{background:rgba(255,255,255,.055);color:#fff}
+.navitem.on{background:rgba(63,163,148,.15);border-left-color:#3FA394;color:#fff;font-weight:600}
+.navitem:focus-visible{outline:2px solid #6FD9C4;outline-offset:-2px}
+.navnum{font-family:var(--mono);font-size:10.5px;color:#6D8494;min-width:16px}
+.navitem.on .navnum{color:#6FD9C4}
+.navname{flex:1;line-height:1.3}
+.navdot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.16);flex:0 0 7px}
+.navdot.part{background:#E8B54B}
+.navdot.done{background:#3FA394}
+
+/* ---------- main ---------- */
+.main{flex:1;min-width:0;padding:34px 40px 90px;max-width:900px}
+.topichead{margin-bottom:26px}
+.crumb{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--teal);margin:0 0 9px;
+}
+.topichead h1{
+  font-family:var(--disp);font-weight:700;font-size:35px;line-height:1.08;
+  letter-spacing:-.025em;margin:0 0 10px;
+}
+.topichead .lede{font-size:16.5px;color:var(--ink2);margin:0;max-width:64ch}
+
+.card{
+  background:var(--paper);border:1px solid var(--rule);
+  padding:24px 26px;margin-bottom:16px;box-shadow:var(--shadow);
+}
+.card > h2{
+  font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink3);margin:0 0 15px;font-weight:600;
+}
+.card p{margin:0 0 12px}
+.card p:last-child{margin-bottom:0}
+.card ul{margin:0 0 12px;padding-left:20px}
+.card li{margin-bottom:7px}
+.card li:last-child{margin-bottom:0}
+strong{font-weight:600;color:var(--ink)}
+code{
+  font-family:var(--mono);font-size:.875em;background:#EDF1F4;
+  padding:1.5px 5px;border:1px solid #DEE5EA;color:#243B4F;
+}
+
+/* formula block */
+.fx{
+  background:var(--indigo-soft);border:1px solid #D5D7EB;border-left:3px solid var(--indigo);
+  padding:17px 20px;margin:0 0 12px;overflow-x:auto;
+}
+.fx:last-child{margin-bottom:0}
+.fx-label{
+  font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--indigo);margin:0 0 9px;font-weight:600;
+}
+.fx-math{font-size:17px;overflow-x:auto;overflow-y:hidden;padding:2px 0}
+.fx-note{font-size:13.5px;color:var(--ink2);margin:10px 0 0;line-height:1.5}
+
+/* worked example */
+.worked{background:var(--teal-soft);border:1px solid #C4DED9;border-left:3px solid var(--teal)}
+.worked > h2{color:var(--teal)}
+.step{display:flex;gap:13px;margin-bottom:13px}
+.step:last-child{margin-bottom:0}
+.stepn{
+  font-family:var(--mono);font-size:10.5px;font-weight:600;color:#fff;background:var(--teal);
+  width:20px;height:20px;flex:0 0 20px;display:flex;align-items:center;justify-content:center;
+  margin-top:3px;
+}
+.stepbody{flex:1;min-width:0}
+.stepbody p{margin:0 0 7px;font-size:15px}
+.stepbody p:last-child{margin-bottom:0}
+.stepmath{font-size:15.5px;overflow-x:auto;padding:5px 0}
+.result{
+  font-family:var(--mono);font-weight:600;font-size:15px;color:var(--teal);
+  background:#fff;border:1px solid #C4DED9;padding:8px 12px;display:inline-block;margin-top:5px;
+}
+
+/* traps */
+.traps{background:var(--ochre-soft);border:1px solid #ECDCB8;border-left:3px solid var(--ochre)}
+.traps > h2{color:var(--ochre)}
+.traps ul{list-style:none;padding:0;margin:0}
+.traps li{
+  padding-left:24px;position:relative;margin-bottom:11px;font-size:15px;line-height:1.55;
+}
+.traps li:last-child{margin-bottom:0}
+.traps li::before{
+  content:"!";position:absolute;left:0;top:1px;
+  font-family:var(--mono);font-weight:700;font-size:11px;color:#fff;background:var(--ochre);
+  width:16px;height:16px;display:flex;align-items:center;justify-content:center;
+}
+
+/* code sample */
+pre{
+  font-family:var(--mono);font-size:13px;line-height:1.65;background:#F4F7F9;
+  border:1px solid var(--rule);padding:14px 16px;overflow-x:auto;margin:0 0 12px;
+  color:#22384B;
+}
+pre:last-child{margin-bottom:0}
+
+/* ---------- practice ---------- */
+.drillhead{
+  display:flex;justify-content:space-between;align-items:baseline;
+  margin:34px 0 15px;padding-bottom:11px;border-bottom:2px solid var(--ink);
+}
+.drillhead h2{
+  font-family:var(--disp);font-weight:700;font-size:22px;letter-spacing:-.02em;margin:0;
+}
+.drillscore{font-family:var(--mono);font-size:12.5px;color:var(--ink2)}
+
+.q{
+  background:var(--paper);border:1px solid var(--rule);
+  padding:21px 24px;margin-bottom:14px;box-shadow:var(--shadow);
+}
+.q-top{display:flex;gap:11px;align-items:baseline;margin-bottom:13px}
+.q-n{
+  font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.1em;
+  color:var(--ink3);flex:0 0 auto;padding-top:2px;
+}
+.q-stem{flex:1;min-width:0;font-size:16px;line-height:1.6}
+.q-stem p{margin:0 0 10px}
+.q-stem p:last-child{margin-bottom:0}
+.q-stem .stemmath{padding:6px 0;overflow-x:auto}
+
+.opts{display:flex;flex-direction:column;gap:8px;margin-bottom:13px}
+.opt{
+  display:flex;gap:11px;align-items:flex-start;width:100%;text-align:left;
+  background:#FBFCFD;border:1px solid var(--rule);padding:11px 14px;
+  cursor:pointer;font-family:var(--sans);font-size:15.2px;line-height:1.5;color:var(--ink);
+  transition:border-color .12s,background .12s;
+}
+.opt:hover:not(:disabled){border-color:var(--ink3);background:#fff}
+.opt:disabled{cursor:default}
+.opt:focus-visible{outline:2px solid var(--teal);outline-offset:1px}
+.opt-k{
+  font-family:var(--mono);font-size:11.5px;font-weight:600;color:var(--ink3);
+  flex:0 0 auto;padding-top:2px;
+}
+.opt-t{flex:1;min-width:0}
+.opt.sel{border-color:var(--indigo);background:var(--indigo-soft)}
+.opt.right{border-color:var(--teal);background:var(--teal-soft)}
+.opt.right .opt-k{color:var(--teal)}
+.opt.wrong{border-color:var(--crimson);background:var(--crimson-soft)}
+.opt.wrong .opt-k{color:var(--crimson)}
+
+.numrow{display:flex;gap:9px;align-items:center;margin-bottom:13px;flex-wrap:wrap}
+.numin{
+  font-family:var(--mono);font-size:15.5px;padding:10px 13px;
+  border:1px solid var(--rule);background:#FBFCFD;width:170px;color:var(--ink);
+}
+.numin:focus{outline:2px solid var(--teal);outline-offset:-1px;background:#fff}
+.numin:disabled{background:#EFF3F5;color:var(--ink2)}
+.numunit{font-family:var(--mono);font-size:12.5px;color:var(--ink3)}
+
+.btn{
+  font-family:var(--sans);font-size:14px;font-weight:600;padding:10px 19px;
+  border:1px solid var(--ink);background:var(--ink);color:#fff;cursor:pointer;
+  transition:opacity .12s;
+}
+.btn:hover{opacity:.85}
+.btn:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn:disabled{opacity:.4;cursor:default}
+
+.verdict{padding:14px 16px;font-size:15px;line-height:1.6;border-left:3px solid;margin-top:4px}
+.verdict.ok{background:var(--teal-soft);border-color:var(--teal)}
+.verdict.no{background:var(--crimson-soft);border-color:var(--crimson)}
+.verdict-tag{
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+  font-weight:600;display:block;margin-bottom:7px;
+}
+.verdict.ok .verdict-tag{color:var(--teal)}
+.verdict.no .verdict-tag{color:var(--crimson)}
+.verdict p{margin:0 0 9px}
+.verdict p:last-child{margin-bottom:0}
+.verdict .vmath{padding:5px 0;overflow-x:auto}
+
+/* footer nav */
+.pagenav{display:flex;justify-content:space-between;gap:12px;margin-top:38px}
+.pagebtn{
+  font-family:var(--sans);font-size:14px;font-weight:600;padding:13px 20px;
+  border:1px solid var(--rule);background:var(--paper);color:var(--ink);cursor:pointer;
+  box-shadow:var(--shadow);
+}
+.pagebtn:hover{border-color:var(--ink)}
+.pagebtn:disabled{opacity:.35;cursor:default}
+.pagebtn:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+
+/* mobile */
+.mobbar{display:none}
+@media(max-width:880px){
+  .shell{flex-direction:column}
+  .rail{
+    position:static;width:100%;flex:none;height:auto;
+  }
+  .rail-nav{display:none}
+  .mobbar{
+    display:flex;gap:7px;overflow-x:auto;padding:13px 16px;
+    background:var(--ink);border-top:1px solid rgba(255,255,255,.1);
+    -webkit-overflow-scrolling:touch;
+  }
+  .mobbar::-webkit-scrollbar{display:none}
+  .mobchip{
+    flex:0 0 auto;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.14);
+    color:#C3D2DD;font-family:var(--mono);font-size:11.5px;padding:7px 13px;cursor:pointer;
+    white-space:nowrap;
+  }
+  .mobchip.on{background:#3FA394;border-color:#3FA394;color:#062420;font-weight:600}
+  .main{padding:24px 18px 70px;max-width:none}
+  .topichead h1{font-size:27px}
+  .card{padding:19px 17px}
+  .q{padding:18px 17px}
+  .fx-math{font-size:15.5px}
+  .numin{width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style>
+
+<div class="shell">
+  <aside class="rail">
+    <div class="rail-head">
+      <p class="rail-eyebrow">IITM BS · Diploma</p>
+      <h1 class="rail-title">Intro to Deep Learning &amp; Generative AI</h1>
+      <p class="rail-sub">Quiz 2 trainer — concept, formula, worked numerical, drill.</p>
+    </div>
+
+    <div class="meter">
+      <div class="meter-top">
+        <span class="meter-label">Drill accuracy</span>
+        <span class="meter-pct" id="pct">—</span>
+      </div>
+      <div class="meter-track">
+        <div class="meter-fill" id="fill"></div>
+        <div class="meter-mark"></div>
+      </div>
+      <p class="meter-note" id="mnote">0 of 68 answered</p>
+    </div>
+
+    <nav class="rail-nav" id="nav"></nav>
+  </aside>
+
+  <div style="flex:1;min-width:0">
+    <div class="mobbar" id="mobbar"></div>
+    <main class="main" id="main"></main>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/contrib/auto-render.min.js"></script>
+<script>
+/* ============================== CONTENT ============================== */
+const T = [
+{
+id:"params", name:"Parameter counting",
+lede:"The single most repeated calculation across both past papers. Every trainable parameter comes from a weight matrix or a bias vector — nothing else.",
+blocks:[
+ {t:"concept", h:"The idea", html:`
+   <p>A layer has parameters only if it <strong>stores numbers that get updated by the optimizer</strong>. A weight matrix stores <code>in × out</code> numbers; a bias vector stores <code>out</code> numbers. Anything that just transforms its input by a fixed rule stores nothing.</p>
+   <p>Recurrent cells look complicated but they are one repeated pattern. A vanilla RNN applies a single transform per timestep. A GRU applies the same shaped transform three times (reset, update, candidate). An LSTM applies it four times (forget, input, output, candidate). Count the block once, then multiply.</p>
+   <p><strong>Zero-parameter layers</strong> — these appear in questions specifically to be counted as nothing: <code>Dropout</code>, <code>ReLU</code>, <code>LeakyReLU</code>, <code>Sigmoid</code>, <code>Tanh</code>, <code>MaxPool2d</code>, <code>AdaptiveMaxPool2d</code>, <code>Flatten</code>.</p>`},
+ {t:"fx", items:[
+   {label:"Linear layer", tex:"\\text{params} = d_{in}\\cdot d_{out} + d_{out}", note:"Weight matrix plus one bias per output unit."},
+   {label:"One recurrent block — textbook convention", tex:"B = d\\cdot h \\;+\\; h^2 \\;+\\; h", note:"Input-to-hidden, hidden-to-hidden, one bias vector. Here d = input size, h = hidden size."},
+   {label:"One recurrent block — PyTorch convention", tex:"B_{\\text{torch}} = d\\cdot h \\;+\\; h^2 \\;+\\; 2h", note:"nn.RNN / nn.GRU / nn.LSTM with bias=True create TWO bias vectors per gate (b_ih and b_hh). When a question shows PyTorch code, use this one."},
+   {label:"Gated cells", tex:"\\text{RNN}=1\\times B \\qquad \\text{GRU}=3\\times B \\qquad \\text{LSTM}=4\\times B", note:"Same block, repeated once per gate."},
+   {label:"Stacked layers", tex:"\\text{layer }1:\\; d\\to h \\qquad \\text{layer }k>1:\\; h\\to h", note:"From the second layer onward the input size becomes h, not the original d. This is the most common stacking error."}
+ ]},
+ {t:"worked", h:"Worked numerical — GRU with 2 layers", steps:[
+   {p:"Setup: <code>nn.GRU(input_size=25, hidden_size=50, num_layers=2, bias=True)</code>. PyTorch code, so use the double-bias block."},
+   {p:"Layer 1 takes d = 25 into h = 50:", tex:"3\\left(25{\\cdot}50 + 50^2 + 2{\\cdot}50\\right) = 3(1250+2500+100) = 11{,}550"},
+   {p:"Layer 2 takes the <em>hidden</em> size as input, so d = 50:", tex:"3\\left(50{\\cdot}50 + 50^2 + 2{\\cdot}50\\right) = 3(2500+2500+100) = 15{,}300"},
+   {p:"Add them:", tex:"11{,}550 + 15{,}300 = 26{,}850", res:"26,850 parameters"}
+ ]},
+ {t:"traps", items:[
+  "Dropout has <strong>zero</strong> parameters. Sep '25 asked for the percentage parameter reduction from adding <code>nn.Dropout(0.3)</code> — the answer was 0.0%.",
+  "Layer 2 of a stacked RNN takes <strong>h</strong> as input, not the original input size.",
+  "PyTorch's double bias makes the real count higher than the textbook formula. Jan '26's GRU question happened to give the same answer under both — yours may not.",
+  "If a question asks for the parameters <em>in the GRU layer</em>, do not include the <code>nn.Linear</code> head that follows it."
+ ]}
+],
+qs:[
+ {type:"num", stem:"A vanilla RNN has input vector size 6, hidden layer 4 neurons, output layer 5 neurons. How many trainable parameters in total, including all biases?", ans:69, tol:0,
+  exp:`<p>Recurrent block plus output head:</p><div class="vmath">$$\\underbrace{6{\\cdot}4}_{24} + \\underbrace{4^2}_{16} + \\underbrace{4}_{b_h} + \\underbrace{4{\\cdot}5}_{20} + \\underbrace{5}_{b_y} = 69$$</div><p>This is Jan '26 Q12 verbatim. Note the sentence length (10 words) is irrelevant — weights are shared across timesteps.</p>`},
+ {type:"mcq", stem:"How many trainable parameters does <code>nn.LSTM(input_size=16, hidden_size=40, num_layers=1, bias=True)</code> contain?",
+  opts:["8,960","9,120","9,280","4,640"], ans:2,
+  exp:`<p>Four gates, PyTorch double bias:</p><div class="vmath">$$4\\left(16{\\cdot}40 + 40^2 + 2{\\cdot}40\\right) = 4(640+1600+80) = 4(2320) = 9280$$</div><p>9,120 is the single-bias textbook answer. Since the question shows PyTorch code with <code>bias=True</code>, 9,280 is correct.</p>`},
+ {type:"num", stem:"A model uses <code>nn.RNN(...)</code> followed by <code>nn.Dropout(0.3)</code>. What is the percentage reduction in the RNN's parameter count caused by adding the dropout layer?", ans:0, tol:0.001, unit:"%",
+  exp:`<p><strong>Zero.</strong> Dropout randomly zeroes activations during training using a fixed probability. It stores no weights and no biases, so it cannot change any parameter count.</p><p>Sep '25 Q155, accepted range −0.0001 to 0.0001. A free 2 marks if you know that dropout is parameter-free.</p>`},
+ {type:"num", stem:"How many trainable parameters does <code>nn.Linear(128, 64)</code> have?", ans:8256, tol:0,
+  exp:`<div class="vmath">$$128 \\times 64 + 64 = 8192 + 64 = 8256$$</div><p>Don't forget the bias term — it's one per <em>output</em> unit.</p>`},
+ {type:"num", stem:"How many trainable parameters in <code>nn.GRU(input_size=10, hidden_size=20, num_layers=1, bias=True)</code>?", ans:1920, tol:0,
+  exp:`<div class="vmath">$$3\\left(10{\\cdot}20 + 20^2 + 2{\\cdot}20\\right) = 3(200+400+40) = 3(640) = 1920$$</div><p>Under the textbook single-bias convention you'd get 3(200+400+20) = 1,860. The PyTorch figure is 1,920.</p>`},
+ {type:"mcq", stem:"Which of these layers contributes trainable parameters to a model?",
+  opts:["<code>nn.AdaptiveMaxPool2d(1)</code>","<code>nn.LeakyReLU(0.2)</code>","<code>nn.Linear(hidden_size, 1)</code>","<code>nn.Flatten()</code>"], ans:2,
+  exp:`<p>Only <code>nn.Linear</code> stores weights. Pooling applies a fixed max/average rule, LeakyReLU's 0.2 is a fixed hyperparameter (not learned in this form), and Flatten only reshapes.</p>`},
+ {type:"num", stem:"An LSTM layer is defined with input size 30 and hidden size 30 (<code>bias=True</code>, one layer). How many trainable parameters?", ans:7440, tol:0,
+  exp:`<div class="vmath">$$4\\left(30{\\cdot}30 + 30^2 + 2{\\cdot}30\\right) = 4(900+900+60) = 4(1860) = 7440$$</div>`}
+]},
+
+{
+id:"shapes", name:"Tensor shapes",
+lede:"Shape questions are pure rule-recall — no arithmetic beyond a ceiling function. They are the fastest marks on the paper if the rules are automatic.",
+blocks:[
+ {t:"concept", h:"The recurrent output rule", html:`
+  <p>Every recurrent module returns two things, and they follow <strong>different</strong> layout rules. This asymmetry is deliberately tested.</p>
+  <ul>
+   <li><code>out</code> — the hidden state at <em>every timestep</em>, from the <em>last layer only</em>. Its layout respects <code>batch_first</code>.</li>
+   <li><code>h</code> (and <code>c</code> for LSTM) — the hidden state at the <em>final timestep</em>, from <em>every layer</em>. Its layout <strong>ignores</strong> <code>batch_first</code> entirely.</li>
+  </ul>
+  <p>So <code>h</code> is always <code>(num_layers, batch, hidden)</code>. No exceptions, no matter how the input was arranged.</p>`},
+ {t:"fx", items:[
+  {label:"Recurrent outputs, batch_first=True", tex:"x:(B,T,d)\\;\\longrightarrow\\;\\texttt{out}:(B,T,h),\\quad \\texttt{h}:(L,B,h)"},
+  {label:"Recurrent outputs, batch_first=False (default)", tex:"x:(T,B,d)\\;\\longrightarrow\\;\\texttt{out}:(T,B,h),\\quad \\texttt{h}:(L,B,h)", note:"Only the input and out flip. h never does."},
+  {label:"Convolution — 'same' padding", tex:"H_{out} = \\left\\lceil \\frac{H_{in}}{s} \\right\\rceil", note:"Kernel size is irrelevant here. The framework pads whatever is needed."},
+  {label:"Convolution — explicit padding", tex:"H_{out} = \\left\\lfloor \\frac{H_{in} + 2p - k}{s} \\right\\rfloor + 1"},
+  {label:"Adaptive pooling", tex:"\\texttt{AdaptivePool2d}(n):\\;(B,C,H,W)\\longrightarrow(B,C,n,n)", note:"Output spatial size is exactly n×n whatever the input. That is the entire purpose of the layer."},
+  {label:"Effective receptive field — n stacked k×k convs, stride 1", tex:"\\text{RF} = n(k-1) + 1"},
+  {label:"Stacking", tex:"\\texttt{torch.stack}([x,x,x],\\, \\texttt{dim}{=}k)", note:"Inserts a new axis of size 3 at position k. For x of shape [4]: dim=0 gives [3,4], dim=1 gives [4,3]."}
+ ]},
+ {t:"worked", h:"Worked numerical — reading a shape question end to end", steps:[
+  {p:"<code>rnn = nn.RNN(input_size=12, hidden_size=24, num_layers=3, batch_first=False)</code> with <code>x = torch.randn(7, 16, 12)</code>."},
+  {p:"<code>batch_first=False</code>, so the input layout is (T, B, d). Match it against the shape:", tex:"(7,16,12) \\;\\Rightarrow\\; T=7,\\;\\; B=16,\\;\\; d=12"},
+  {p:"<code>out</code> keeps the input layout and swaps the last dim for the hidden size:", tex:"\\texttt{out}: (T,B,h) = (7,16,24)"},
+  {p:"<code>h</code> uses its own fixed layout, layers first:", tex:"\\texttt{h}: (L,B,h) = (3,16,24)", res:"out (7, 16, 24) · h (3, 16, 24)"}
+ ]},
+ {t:"traps", items:[
+  "<code>h</code> is <code>(layers, batch, hidden)</code> even when <code>batch_first=True</code>. Jan '26 Q20 used exactly this.",
+  "Under 'same' padding, ignore the kernel size completely — just take the ceiling of input over stride.",
+  "<code>out</code> gives the last layer at all timesteps; <code>h</code> gives all layers at the last timestep. Swapping these is the most common error.",
+  "Bidirectional doubles the last dimension of <code>out</code> and the first dimension of <code>h</code>."
+ ]}
+],
+qs:[
+ {type:"mcq", stem:"<pre>rnn = nn.RNN(input_size=12, hidden_size=24,\n              num_layers=3, batch_first=False)\nx = torch.randn(7, 16, 12)\nout, h = rnn(x)</pre><p>What is the shape of <code>out</code>?</p>",
+  opts:["(16, 7, 24)","(7, 16, 24)","(3, 16, 24)","(7, 16, 12)"], ans:1,
+  exp:`<p><code>batch_first=False</code> means (T, B, d) = (7, 16, 12). <code>out</code> keeps that layout with hidden size last: <strong>(7, 16, 24)</strong>.</p>`},
+ {type:"mcq", stem:"For the same code above, what is the shape of <code>h</code>?",
+  opts:["(7, 16, 24)","(16, 3, 24)","(3, 16, 24)","(3, 7, 24)"], ans:2,
+  exp:`<p><code>h</code> is always <code>(num_layers, batch, hidden)</code> = <strong>(3, 16, 24)</strong>. It reports the final timestep for each of the 3 layers.</p>`},
+ {type:"mcq", stem:"<pre>gru = nn.GRU(input_size=25, hidden_size=50,\n              num_layers=2, batch_first=True)\nx = torch.randn(12, 30, 25)\nout, h = gru(x)</pre><p>What is the shape of <code>h</code>?</p>",
+  opts:["(12, 2, 50)","(2, 12, 50)","(12, 30, 50)","(2, 30, 50)"], ans:1,
+  exp:`<p><code>batch_first=True</code> so B = 12, T = 30. But <code>h</code> ignores that flag entirely:</p><div class="vmath">$$\\texttt{h}:(L,B,h)=(2,12,50)$$</div><p>Option (a) is the trap — it's what you get by wrongly applying <code>batch_first</code> to <code>h</code>.</p>`},
+ {type:"num", stem:"A 224×224 input image passes through a 5×5 convolutional layer with stride 3 and <strong>\"same\"</strong> padding. What is the spatial height of the output?", ans:75, tol:0,
+  exp:`<div class="vmath">$$\\left\\lceil \\frac{224}{3} \\right\\rceil = \\lceil 74.67 \\rceil = 75$$</div><p>The 5×5 kernel is a distraction. Under 'same' padding the framework adds exactly enough padding that only the stride matters.</p>`},
+ {type:"num", stem:"An input of height 64 passes through a 3×3 conv with padding 1 and stride 2. What is the output height?", ans:32, tol:0,
+  exp:`<p>Explicit padding is given, so use the full formula:</p><div class="vmath">$$\\left\\lfloor \\frac{64 + 2(1) - 3}{2} \\right\\rfloor + 1 = \\lfloor 31.5 \\rfloor + 1 = 31 + 1 = 32$$</div>`},
+ {type:"mcq", stem:"<pre>x = torch.randn(4, 8, 15, 11)\npool = nn.AdaptiveAvgPool2d(3)\ny = pool(x)</pre><p>What is the shape of <code>y</code>?</p>",
+  opts:["(4, 8, 5, 3)","(4, 8, 13, 9)","(4, 8, 3, 3)","(4, 3, 3, 3)"], ans:2,
+  exp:`<p>Adaptive pooling guarantees a 3×3 spatial output regardless of the 15×11 input. Batch (4) and channels (8) pass through untouched: <strong>(4, 8, 3, 3)</strong>.</p><p>Jan '26 used <code>AdaptiveMaxPool2d(1)</code>, where the answer was 1×1.</p>`},
+ {type:"num", stem:"A network stacks five consecutive 3×3 convolutions, each with stride 1 and padding that preserves spatial size. What is the side length of the effective receptive field of a fifth-layer neuron?", ans:11, tol:0,
+  exp:`<div class="vmath">$$\\text{RF}=n(k-1)+1 = 5(3-1)+1 = 11$$</div><p>Intuition: each 3×3 layer extends reach by 1 pixel on each side, so five layers add 5 either way: 5 + 1 + 5 = 11.</p>`},
+ {type:"mcq", stem:"<pre>x = torch.tensor([1, 2, 3, 4])\na = torch.stack([x, x, x], dim=0)\nb = torch.stack([x, x, x], dim=1)</pre><p>What are the shapes of <code>a</code> and <code>b</code>?</p>",
+  opts:["a: [3,3], b: [4,4]","a: [4,3], b: [3,4]","a: [3,4], b: [4,3]","a: [4,4], b: [3,3]"], ans:2,
+  exp:`<p><code>stack</code> inserts a <em>new</em> axis of size 3 (the number of tensors) at the given position. <code>x</code> has shape [4].</p><p><code>dim=0</code> → new axis first → <strong>[3, 4]</strong>. <code>dim=1</code> → new axis second → <strong>[4, 3]</strong>.</p>`},
+ {type:"mcq", stem:"<pre>rnn = nn.RNN(input_size=8, hidden_size=32,\n              batch_first=False)</pre><p>A batch of 10 sequences with context length T = 28 is passed in. What must the input tensor's shape be?</p>",
+  opts:["(10, 8, 32)","(10, 28, 8)","(28, 10, 8)","(8, 10, 28)"], ans:2,
+  exp:`<p><code>batch_first=False</code> means the layout is (T, B, d) = <strong>(28, 10, 8)</strong>. Option (b) is the <code>batch_first=True</code> answer.</p>`}
+]},
+
+{
+id:"optim", name:"Optimizers & schedules",
+lede:"These questions are hand-simulations. The trick is never the algebra — it is counting update steps correctly and knowing which quantity the question actually asks for.",
+blocks:[
+ {t:"concept", h:"Two independent axes", html:`
+  <p>Deep learning optimizers vary along two axes that questions constantly try to conflate.</p>
+  <ul>
+   <li><strong>Acceleration</strong> (momentum, NAG, Adam) — adds a <em>memory of past gradients</em>. Improves convergence even at a fixed learning rate.</li>
+   <li><strong>Scheduling</strong> (step / exponential / cosine decay, <code>ReduceLROnPlateau</code>) — changes <em>η over time</em> on a predetermined rule. Carries no gradient memory.</li>
+  </ul>
+  <p>They are orthogonal and routinely combined. Any statement claiming that scheduling gives gradient memory, or that acceleration requires a decaying learning rate, is false.</p>
+  <p><strong>Adaptive methods</strong> sit slightly apart: Adagrad accumulates a running <em>sum</em> of squared gradients, so its step size only ever shrinks. RMSProp replaces that sum with an exponential moving average so old gradients decay away and the step size can recover.</p>`},
+ {t:"fx", items:[
+  {label:"Adagrad", tex:"v_t = v_{t-1} + (\\nabla w_t)^2 \\qquad w_{t+1} = w_t - \\frac{\\eta}{\\sqrt{v_t}}\\nabla w_t", note:"Sum of squares — monotonically increasing, so the effective learning rate monotonically shrinks."},
+  {label:"RMSProp", tex:"v_t = \\beta v_{t-1} + (1-\\beta)(\\nabla w_t)^2", note:"Exponential moving average. Old gradients fade instead of accumulating forever."},
+  {label:"Weight on the very first gradient inside RMSProp's history", tex:"\\text{weight on }(\\nabla w_0)^2\\text{ in } v_t \\;=\\; \\beta^{\\,t}(1-\\beta)", note:"Unroll the recursion: each step multiplies the old history by β once more, and the term entered scaled by (1−β)."},
+  {label:"Effective learning rate", tex:"\\eta_{\\text{eff}} = \\frac{\\eta}{\\sqrt{v_t}}"},
+  {label:"Optimizer steps in a training run", tex:"\\text{steps} = \\text{epochs} \\times \\begin{cases}\\left\\lceil N/B \\right\\rceil & \\texttt{drop\\_last=False}\\\\[4pt] \\left\\lfloor N/B \\right\\rfloor & \\texttt{drop\\_last=True}\\end{cases}"}
+ ]},
+ {t:"worked", h:"Worked numerical — Adagrad effective learning rate", steps:[
+  {p:"Given: gradient equals 1 at every point, <span>$v_{-1}=0$</span>, <span>$\\varepsilon = 0$</span>, initial <span>$\\eta = 2$</span>. Find the effective learning rate at the <strong>sixteenth</strong> update."},
+  {p:"With a constant gradient of 1, the accumulator just counts steps:", tex:"v_0 = 1,\\quad v_1 = 2,\\quad v_2 = 3,\\quad \\ldots \\quad v_t = t+1"},
+  {p:"Now the off-by-one. The rule <span>$w_{t+1} = w_t - \\frac{\\eta}{\\sqrt{v_t}}\\nabla w_t$</span> means the update producing <span>$w_{t+1}$</span> uses <span>$v_t$</span>. Since <span>$w_0 \\to w_1$</span> is update #1, update #16 is <span>$w_{15} \\to w_{16}$</span> and uses <span>$v_{15}$</span>."},
+  {p:"", tex:"v_{15} = 16 \\quad\\Longrightarrow\\quad \\eta_{\\text{eff}} = \\frac{2}{\\sqrt{16}} = \\frac{2}{4} = 0.50", res:"0.50"},
+  {p:"If you had used <span>$v_{16}=17$</span> you would get 0.485 — close enough to look plausible, wrong enough to lose the mark."}
+ ]},
+ {t:"traps", items:[
+  "Count updates carefully: <span>$w_0 \\to w_1$</span> is the <strong>first</strong> update, so the nth update uses <span>$v_{n-1}$</span>.",
+  "Adagrad's effective learning rate can <strong>never</strong> increase. Any option saying otherwise is false.",
+  "<code>drop_last=True</code> means floor, not ceiling. Both papers have used both settings.",
+  "Momentum fixes <strong>zig-zag oscillation in narrow valleys</strong> — not vanishing gradients, not overfitting, not slow convergence from a large learning rate.",
+  "<code>patience=k</code> in <code>ReduceLROnPlateau</code> means tolerate k stagnant epochs <em>before</em> cutting the LR."
+ ]}
+],
+qs:[
+ {type:"num", stem:"Adagrad with <span>$v_{-1}=0$</span>, <span>$\\varepsilon=0$</span>, gradient equal to 1 at every point, and initial learning rate <span>$\\eta = 1$</span>. What is the effective learning rate at the <strong>ninth</strong> update (the step producing <span>$w_9$</span>)? Answer to 2 decimals.", ans:0.333, tol:0.02,
+  exp:`<p>The ninth update is <span>$w_8 \\to w_9$</span>, so it uses <span>$v_8$</span>. With constant gradient 1, <span>$v_t = t+1$</span>, so <span>$v_8 = 9$</span>.</p><div class="vmath">$$\\eta_{\\text{eff}} = \\frac{1}{\\sqrt{9}} = \\frac{1}{3} = 0.33$$</div><p>Sep '25 Q151, accepted range 0.3 to 0.4.</p>`},
+ {type:"num", stem:"RMSProp with <span>$v_t = \\beta v_{t-1} + (1-\\beta)(\\nabla w_t)^2$</span>, <span>$v_{-1}=0$</span>, <span>$\\beta = 0.9$</span>. After 10 iterations (t = 0…9), what multiplicative weight is applied to the very first gradient term <span>$(\\nabla w_0)^2$</span> inside <span>$v_9$</span>? Answer to 3 decimals.", ans:0.0387, tol:0.006,
+  exp:`<p>The term <span>$(\\nabla w_0)^2$</span> entered <span>$v_0$</span> scaled by <span>$(1-\\beta)$</span>. Each subsequent step multiplies the whole history by <span>$\\beta$</span> once more, and there are 9 such steps from <span>$v_0$</span> to <span>$v_9$</span>:</p><div class="vmath">$$\\beta^{9}(1-\\beta) = 0.9^{9} \\times 0.1 = 0.3874 \\times 0.1 = 0.0387$$</div><p>Sep '25 Q137, accepted range 0.03 to 0.04.</p>`},
+ {type:"num", stem:"You train for 12 epochs on 900 images with batch size 32 and <code>drop_last=False</code>. How many total calls to <code>optimizer.step()</code>?", ans:348, tol:0,
+  exp:`<div class="vmath">$$\\left\\lceil \\frac{900}{32} \\right\\rceil = \\lceil 28.125 \\rceil = 29 \\qquad 29 \\times 12 = 348$$</div><p>Sep '25 Q135. The final batch has only 4 images but still triggers an update, which is why we round up.</p>`},
+ {type:"num", stem:"You train for 15 epochs on 1000 images with batch size 64 and <code>drop_last=True</code>. How many total optimizer updates?", ans:225, tol:0,
+  exp:`<div class="vmath">$$\\left\\lfloor \\frac{1000}{64} \\right\\rfloor = \\lfloor 15.625 \\rfloor = 15 \\qquad 15 \\times 15 = 225$$</div><p><code>drop_last=True</code> discards the incomplete final batch, so we round <em>down</em>. With <code>False</code> it would be 16 × 15 = 240.</p>`},
+ {type:"mcq", stem:"The Momentum optimizer helps overcome which limitation of vanilla gradient descent?",
+  opts:["Slow convergence near the minimum due to a large learning rate","Zig-zag oscillations in narrow valleys caused by frequently changing gradient directions","Vanishing gradients caused by activation functions","Overfitting due to excessive updates"], ans:1,
+  exp:`<p>In a ravine-shaped loss surface the gradient flips direction across the narrow axis each step, producing zig-zag. Momentum's velocity term averages those opposing components to near zero while reinforcing the consistent direction along the valley floor.</p><p>Vanishing gradients are an activation/architecture problem (fixed by ReLU, LSTM gates, residuals), not something momentum addresses.</p>`},
+ {type:"mcq", stem:"<pre>scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(\n    optimizer, mode='min', factor=0.5, patience=1)</pre><p>What does <code>patience</code> control?</p>",
+  opts:["How many epochs with no improvement in the monitored metric are tolerated before reducing the learning rate","It automatically restarts training after the learning rate is reduced","The number of epochs required for validation loss to reach its minimum","How many epochs the learning rate stays frozen after being reduced"], ans:0,
+  exp:`<p><code>patience=1</code> means: if the monitored metric fails to improve for 1 epoch, cut the LR by <code>factor</code> (here, halve it). It is a tolerance <em>before</em> acting, not a cooldown after acting — that separate parameter is called <code>cooldown</code>.</p>`},
+ {type:"multi", stem:"Select <strong>all</strong> correct statements about optimization.",
+  opts:["Momentum accumulates an exponentially weighted average of past gradients and can speed convergence even at a constant learning rate","Step decay, exponential decay and cosine decay are learning rate scheduling techniques","Adagrad's effective learning rate can increase over the course of training","RMSProp addresses Adagrad's shrinking step size by replacing the running sum with an exponential moving average","Learning rate scheduling introduces memory of past gradients into the optimization process","Learning rate scheduling and accelerated gradient methods can be used together"], ans:[0,1,3,5],
+  exp:`<p><strong>(c) is false</strong> — Adagrad's <span>$v_t$</span> is a sum of squares, so it only grows and <span>$\\eta/\\sqrt{v_t}$</span> only shrinks. This monotonic decay is precisely the weakness RMSProp fixes.</p><p><strong>(e) is false</strong> — this is the classic swapped statement. Scheduling changes η on a fixed rule with <em>no</em> gradient memory; <em>accelerated</em> methods are the ones with memory. Both Jan '26 Q16 and Sep '25 used this exact inversion.</p>`}
+]},
+
+{
+id:"gradflow", name:"Vanishing & exploding gradients",
+lede:"A one-line calculation that students routinely get wrong by comparing the eigenvalue to 1 without first multiplying by the activation derivative.",
+blocks:[
+ {t:"concept", h:"Why the product matters", html:`
+  <p>Backpropagating through T timesteps multiplies the same Jacobian T times. Each step contributes two factors: the recurrent weight matrix <span>$W_{hh}$</span>, and the derivative of the activation function.</p>
+  <p>After T steps the gradient scales roughly as <span>$(|\\lambda_{max}| \\cdot \\sigma')^T$</span>. Because this is raised to a large power, anything even slightly below 1 collapses to zero and anything slightly above 1 blows up. Only the <strong>largest-magnitude eigenvalue</strong> matters — the smaller ones vanish faster and become irrelevant.</p>`},
+ {t:"fx", items:[
+  {label:"Per-step gradient scaling", tex:"\\gamma \\;\\approx\\; |\\lambda_{max}| \\cdot \\sigma'", note:"Compute this before comparing to 1. Never compare λ to 1 directly."},
+  {label:"Verdict", tex:"\\gamma > 1 \\Rightarrow \\text{exploding}\\qquad \\gamma < 1 \\Rightarrow \\text{vanishing}\\qquad \\gamma \\approx 1 \\Rightarrow \\text{near-stable}"},
+  {label:"Typical activation derivatives", tex:"\\tanh: \\;\\sigma'_{\\max}=1,\\;\\text{avg}\\approx 0.4 \\qquad \\text{sigmoid}: \\;\\sigma'_{\\max}=0.25", note:"The paper states the average value to use — read it from the question rather than assuming."},
+  {label:"Break-even eigenvalue", tex:"|\\lambda_{max}| = \\frac{1}{\\sigma'}", note:"tanh at 0.4 → break-even λ = 2.5. Sigmoid at 0.25 → break-even λ = 4."}
+ ]},
+ {t:"worked", h:"Worked numerical — three models at once", steps:[
+  {p:"Sequences of length T = 20, tanh activation with average derivative ≈ 0.4. Eigenvalues of <span>$W_{hh}$</span> given per model."},
+  {p:"<strong>Model A</strong>, largest |λ| = 3.2:", tex:"3.2 \\times 0.4 = 1.28 \\;>\\; 1 \\;\\Rightarrow\\; \\textbf{exploding}"},
+  {p:"<strong>Model B</strong>, largest |λ| = 0.95 — this looks near-stable, which is the trap:", tex:"0.95 \\times 0.4 = 0.38 \\;<\\; 1 \\;\\Rightarrow\\; \\textbf{vanishing}"},
+  {p:"<strong>Model C</strong>, largest |λ| = 0.45:", tex:"0.45 \\times 0.4 = 0.18 \\;<\\; 1 \\;\\Rightarrow\\; \\textbf{vanishing}", res:"A: exploding · B: vanishing · C: vanishing"},
+  {p:"Jan '26 Q8. The distractor option said B was near-stable, which is what you pick if you compare 0.95 to 1 and stop."}
+ ]},
+ {t:"traps", items:[
+  "<strong>Always multiply by <span>$\\sigma'$</span> first.</strong> λ = 0.95 sounds stable but vanishes once the tanh factor is applied.",
+  "Use only the largest-magnitude eigenvalue. Negative eigenvalues count by absolute value: −2.1 has magnitude 2.1.",
+  "Gradient clipping fixes exploding, not vanishing. Vanishing needs architecture: LSTM/GRU gates, residual connections, or ReLU."
+ ]}
+],
+qs:[
+ {type:"mcq", stem:"Sequences of length T = 25, <strong>sigmoid</strong> recurrent activation (average derivative ≈ 0.25). Largest-magnitude eigenvalues of <span>$W_{hh}$</span>: Model P = 5.0, Model Q = 3.6, Model R = 4.0. Which behaviour does each exhibit?",
+  opts:["P: Exploding, Q: Exploding, R: Exploding","P: Exploding, Q: Vanishing, R: Near-stable","P: Near-stable, Q: Vanishing, R: Exploding","P: Exploding, Q: Near-stable, R: Vanishing"], ans:1,
+  exp:`<div class="vmath">$$P: 5.0(0.25)=1.25>1 \\;\\Rightarrow\\; \\text{exploding}$$$$Q: 3.6(0.25)=0.90<1 \\;\\Rightarrow\\; \\text{vanishing}$$$$R: 4.0(0.25)=1.00 \\;\\Rightarrow\\; \\text{near-stable}$$</div><p>With sigmoid the break-even eigenvalue is 1/0.25 = 4. Eigenvalues well above 1 can still vanish.</p>`},
+ {type:"num", stem:"An RNN uses tanh with average derivative 0.4 during backpropagation. Above what eigenvalue magnitude does the gradient begin to explode? Answer to 1 decimal.", ans:2.5, tol:0.05,
+  exp:`<div class="vmath">$$|\\lambda| \\cdot 0.4 = 1 \\quad\\Longrightarrow\\quad |\\lambda| = \\frac{1}{0.4} = 2.5$$</div><p>Knowing this threshold turns the whole question type into a single comparison.</p>`},
+ {type:"mcq", stem:"A model's <span>$W_{hh}$</span> has eigenvalues λ = [0.88, −0.79, 0.6, 0.31], with tanh activation (average derivative 0.4). What behaviour is expected over T = 20 steps?",
+  opts:["Exploding gradients","Vanishing gradients","Near-stable gradients","Cannot be determined without the input data"], ans:1,
+  exp:`<p>Largest magnitude is 0.88.</p><div class="vmath">$$0.88 \\times 0.4 = 0.352 \\;<\\; 1$$</div><p>Over 20 steps this compounds to <span>$0.352^{20} \\approx 10^{-9}$</span> — thoroughly vanished. Note that <strong>−0.79</strong> has magnitude 0.79, still less than 0.88, so 0.88 remains the dominant term.</p>`},
+ {type:"mcq", stem:"Which intervention directly addresses <strong>exploding</strong> gradients but does nothing for vanishing ones?",
+  opts:["Replacing tanh with ReLU","Gradient clipping","Using an LSTM instead of a vanilla RNN","Adding residual connections"], ans:1,
+  exp:`<p>Gradient clipping rescales the gradient when its norm exceeds a threshold — it caps upward blow-up but cannot resurrect a gradient that has already decayed to near zero. The other three all help gradients <em>survive</em> depth, addressing vanishing.</p>`}
+]},
+
+{
+id:"lstm", name:"LSTM & GRU internals",
+lede:"Definitional marks. Every one of these appeared in a past paper and none require calculation.",
+blocks:[
+ {t:"concept", h:"Two memories, two activations", html:`
+  <p>An LSTM carries <strong>two</strong> state vectors, and the exam tests which is which:</p>
+  <ul>
+   <li><span>$h_t$</span> — the <strong>hidden state</strong>, rewritten every timestep. This is <strong>short-term</strong> memory.</li>
+   <li><span>$c_t$</span> — the <strong>cell state</strong>, modified only by gated addition along a nearly linear path. This is <strong>long-term</strong> memory, and it is why LSTMs resist vanishing gradients.</li>
+  </ul>
+  <p>The activation split is equally deliberate. <strong>Sigmoid</strong> outputs land in (0, 1), which is exactly what a <em>gate</em> needs — a per-element "fraction to keep". <strong>Tanh</strong> outputs land in (−1, 1), zero-centred, which is what <em>content</em> needs so it can push the state in either direction.</p>
+  <p>Combining a gate with a state is always <strong>element-wise multiplication</strong> <span>$\\odot$</span>. Never matrix multiplication — the gate is a mask over individual units, not a linear transform.</p>`},
+ {t:"fx", items:[
+  {label:"Gates — all sigmoid", tex:"f_t = \\sigma(W_f\\cdot[h_{t-1},x_t]+b_f)\\quad i_t = \\sigma(W_i\\cdot[\\cdot]+b_i)\\quad o_t = \\sigma(W_o\\cdot[\\cdot]+b_o)"},
+  {label:"Candidate content — tanh", tex:"\\tilde{c}_t = \\tanh(W_c\\cdot[h_{t-1},x_t]+b_c)"},
+  {label:"Memory updates — element-wise product", tex:"c_t = f_t \\odot c_{t-1} + i_t \\odot \\tilde{c}_t \\qquad h_t = o_t \\odot \\tanh(c_t)"},
+  {label:"Context length for a batch", tex:"T = \\max_i \\;\\text{len}(\\text{sequence}_i)", note:"Shorter sequences are padded up to T."}
+ ]},
+ {t:"traps", items:[
+  "<span>$h_t$</span> is short-term, <span>$c_t$</span> is long-term. Options pairing a <em>gate</em> with a state (e.g. \"input gate and forget gate\") are always wrong — gates are controls, not memories.",
+  "The operator in the memory update equations is <span>$\\odot$</span> (element-wise), never <span>$\\cdot$</span> (matrix).",
+  "Padding is <strong>not</strong> required when batch size = 1, because each sequence is processed alone. It is required for every larger batch containing unequal lengths.",
+  "GRU has 3 gates and merges cell and hidden state into one; LSTM has 4 gates and keeps them separate."
+ ]}
+],
+qs:[
+ {type:"mcq", stem:"In an LSTM, which pair correctly represents <strong>short-term</strong> and <strong>long-term</strong> memory respectively?",
+  opts:["Input gate <span>$i_t$</span> and forget gate <span>$f_t$</span>","Hidden state <span>$h_t$</span> and cell state <span>$c_t$</span>","Output gate <span>$o_t$</span> and cell state <span>$c_t$</span>","Hidden state <span>$h_t$</span> and input gate <span>$i_t$</span>"], ans:1,
+  exp:`<p><span>$h_t$</span> is overwritten each timestep — short-term. <span>$c_t$</span> travels along an almost-linear path modified only by gated addition, so information can persist for many steps — long-term.</p><p>Any option naming a <em>gate</em> as a memory is wrong; gates regulate flow, they don't store state.</p>`},
+ {type:"mcq", stem:"Which operator belongs in the placeholders? <div class=\"stemmath\">$$c_t = f_t\\,[?]\\,c_{t-1} + i_t\\,[?]\\,\\tilde{c}_t \\qquad h_t = o_t\\,[?]\\,\\tanh(c_t)$$</div>",
+  opts:["Matrix multiplication","Element-wise multiplication <span>$\\odot$</span>","Cross product","Element-wise addition"], ans:1,
+  exp:`<p>Each gate has the same dimensionality as the state and holds a value in (0,1) per unit. Multiplying element-wise applies an independent "keep this fraction" decision to each unit. Matrix multiplication would mix units together and destroy that per-unit gating.</p>`},
+ {type:"mcq", stem:"Why do LSTM gates use <code>sigmoid</code> while the candidate state and hidden output use <code>tanh</code>?",
+  opts:["<code>sigmoid</code> is much more computationally efficient than <code>tanh</code>","They are the only activations that avoid the vanishing gradient problem","<code>sigmoid</code> outputs lie in (0,1), suitable for gating or scaling information; <code>tanh</code> is used to centre values around zero","<code>sigmoid</code> is zero-centred which stabilises training, while <code>tanh</code> is better for gates"], ans:2,
+  exp:`<p>A gate must express "keep 0% to 100% of this" — that requires an output bounded in (0, 1), which is sigmoid. Content should be free to push the state up or down, which requires a zero-centred range (−1, 1), which is tanh.</p><p>Option (d) is the reversed version — tanh is the zero-centred one.</p>`},
+ {type:"num", stem:"An RNN is trained on this batch: [\"Hi How are you\", \"Today is a warm day\", \"Great work boss\"]. Tokenising on spaces, what context length T should the model use so it generalises across all inputs?", ans:5, tol:0,
+  exp:`<p>Token counts: 4, <strong>5</strong>, 3. T must accommodate the longest sequence, so T = 5 and the other two get padded.</p><p>Sep '25 Q144.</p>`},
+ {type:"mcq", stem:"Sequences of 4, 3 and 1 tokens are used to train an RNN classifier. Under which scenario is padding <strong>not strictly required</strong>?",
+  opts:["Mini-batch gradient descent with batch size 32","Stochastic gradient descent (SGD) with batch size 1","Batch gradient descent processing all samples at once","Mini-batch gradient descent with batch size 16"], ans:1,
+  exp:`<p>Padding exists so that unequal sequences can be stacked into one rectangular tensor. With batch size 1 there is nothing to stack against — each sequence is processed at its own natural length, so no padding is needed.</p><p>Every other option puts multiple unequal sequences into one tensor.</p>`}
+]},
+
+{
+id:"lmeval", name:"Language model evaluation",
+lede:"Perplexity, BLEU and beam search account for a large share of both papers. All three are short formulas with one counting subtlety each.",
+blocks:[
+ {t:"concept", h:"Perplexity is just exponentiated loss", html:`
+  <p>Cross-entropy measures average surprise per token in nats. Perplexity re-expresses that as an effective branching factor: "the model is as confused as if it were choosing uniformly among this many options."</p>
+  <p>Because <code>nn.CrossEntropyLoss</code> reports natural-log nats, converting is a single <span>$e^x$</span>. Lower loss → lower perplexity → better model.</p>
+  <p>The bounds are worth memorising. Perfect prediction means <span>$P = 1$</span>, giving <span>$\\text{PPL}=1$</span>. The worst sensible case is a uniform guess across the vocabulary, giving <span>$\\text{PPL}=|V|$</span> — so perplexity cannot exceed vocabulary size.</p>`},
+ {t:"fx", items:[
+  {label:"Perplexity", tex:"\\text{PPL} = e^{\\,\\text{CE}} \\qquad\\text{equivalently}\\qquad \\text{PPL} = P(w_1,\\ldots,w_N)^{-\\frac{1}{N}}"},
+  {label:"BLEU-1", tex:"\\text{BLEU-1} = BP \\cdot p_1"},
+  {label:"Modified unigram precision", tex:"p_1 = \\frac{\\sum_w \\min\\big(\\text{count}_{cand}(w),\\;\\text{count}_{ref}(w)\\big)}{c}", note:"Clip each candidate word at its count in the reference. This stops you inflating precision by repeating a word."},
+  {label:"Brevity penalty", tex:"BP = \\begin{cases} 1 & \\text{if } c > r \\\\ e^{\\,1 - r/c} & \\text{if } c \\le r\\end{cases}", note:"c = candidate length, r = reference length. Stops you gaming precision by emitting almost nothing."},
+  {label:"N-gram probability, no smoothing", tex:"P(w_1\\ldots w_n) = P(w_1)\\prod_{i=2}^{n} \\frac{\\text{count}(w_{i-1}w_i)}{\\text{count}(w_{i-1})}", note:"Any unseen context makes the whole product zero."}
+ ]},
+ {t:"worked", h:"Worked numerical — BLEU-1 on two predictions", steps:[
+  {p:"Reference: <code>machine learning is very fun</code> — so r = 5, and every word appears once."},
+  {p:"<strong>Prediction 1:</strong> <code>machine learning is fun fun</code>, c = 5. Clip each word at its reference count: <em>machine</em> 1, <em>learning</em> 1, <em>is</em> 1, <em>fun</em> appears twice in the candidate but only once in the reference, so it clips to <strong>1</strong>."},
+  {p:"", tex:"p_1 = \\frac{1+1+1+1}{5} = \\frac{4}{5} = 0.8"},
+  {p:"Lengths are equal, so c ≤ r and:", tex:"BP = e^{\\,1-5/5} = e^{0} = 1 \\quad\\Rightarrow\\quad \\text{BLEU-1} = 1 \\times 0.8", res:"0.800"},
+  {p:"<strong>Prediction 2:</strong> <code>machine learning is fun</code>, c = 4. All four words match within budget, so <span>$p_1 = 4/4 = 1$</span> — perfect precision. But now c &lt; r:"},
+  {p:"", tex:"BP = e^{\\,1-5/4} = e^{-0.25} = 0.7788 \\quad\\Rightarrow\\quad \\text{BLEU-1} = 0.7788 \\times 1", res:"0.779"},
+  {p:"The pair is the whole lesson: repetition is punished by clipping, brevity is punished by BP. Jan '26 Q17–18."}
+ ]},
+ {t:"traps", items:[
+  "Clipping caps at the <strong>reference</strong> count — if the reference contains a word twice, the candidate may count it twice.",
+  "Perplexity is lowest when <span>$P = 1$</span>, <strong>not</strong> when P = 0. A probability of 0 sends perplexity to infinity.",
+  "Beam search keeps the top K sequences <strong>overall</strong>, not the top K from each beam.",
+  "In an unsmoothed n-gram model, one unseen context zeroes the entire sequence probability."
+ ]}
+],
+qs:[
+ {type:"num", stem:"A language model's <code>nn.CrossEntropyLoss</code>, averaged over all test tokens, is <strong>2.15</strong>. What is its perplexity? Answer to 2 decimals.", ans:8.58, tol:0.06,
+  exp:`<div class="vmath">$$\\text{PPL} = e^{2.15} = 8.58$$</div><p>Sep '25 Q147. The distractor 2.15 is the raw loss; 4.71 is roughly <span>$2^{2.15}$</span>, which is the answer if you wrongly assume log base 2. <code>nn.CrossEntropyLoss</code> uses natural log.</p>`},
+ {type:"num", stem:"A model reports an average cross-entropy of <strong>1.60</strong> nats per token. What is its perplexity? Answer to 2 decimals.", ans:4.95, tol:0.06,
+  exp:`<div class="vmath">$$e^{1.60} = 4.953 \\approx 4.95$$</div><p>Interpretation: the model is as uncertain as if it were choosing uniformly among about 5 words at each step.</p>`},
+ {type:"mcq", stem:"Model A has cross-entropy loss 2.0 and Model B has 1.5. Which has <strong>lower</strong> perplexity?",
+  opts:["Model A","Model B","Both equal","Insufficient information"], ans:1,
+  exp:`<p>Perplexity is <span>$e^{\\text{CE}}$</span>, a strictly increasing function, so lower loss always means lower perplexity:</p><div class="vmath">$$e^{2.0}=7.39 \\qquad e^{1.5}=4.48$$</div><p>Jan '26 Q7. You never need to compute the values — monotonicity settles it.</p>`},
+ {type:"mcq", stem:"Reference: <code>the cat sat on the mat</code>. Prediction: <code>the cat sat on the the mat</code>. What is the BLEU-1 score?",
+  opts:["1.000","0.857","0.750","0.734"], ans:1,
+  exp:`<p>The reference contains <em>the</em> <strong>twice</strong>, so the candidate's three occurrences clip to 2 (not 1).</p><div class="vmath">$$p_1 = \\frac{2+1+1+1+1}{7} = \\frac{6}{7} = 0.857$$</div><p>c = 7 > r = 6, so BP = 1 and BLEU = 0.857.</p><p>This is the trap: clipping uses the reference count, which here is two.</p>`},
+ {type:"mcq", stem:"Reference: <code>the cat sat on the mat</code>. Prediction: <code>the cat sat</code>. What is the BLEU-1 score?",
+  opts:["1.000","0.500","0.368","0.607"], ans:2,
+  exp:`<p>All three words appear within their reference budget, so precision is perfect: <span>$p_1 = 3/3 = 1$</span>. But the candidate is far too short:</p><div class="vmath">$$BP = e^{\\,1-6/3} = e^{-1} = 0.368$$</div><div class="vmath">$$\\text{BLEU-1} = 0.368 \\times 1.000 = 0.368$$</div><p>Perfect precision, destroyed by the brevity penalty.</p>`},
+ {type:"mcq", stem:"Beam search with K = 2. Step 1 gives P(\"A\") = 0.5, P(\"The\") = 0.4, P(\"It\") = 0.1. Expanding the top 2: given \"A\", P(dog) = 0.6, P(cat) = 0.3; given \"The\", P(dog) = 0.5, P(cat) = 0.4. Which beams are kept for step 3?",
+  opts:["(\"A dog\") only","(\"A dog\") and (\"The cat\")","(\"A dog\") and (\"The dog\")","(\"A dog\"), (\"A cat\"), (\"The dog\") and (\"The cat\")"], ans:2,
+  exp:`<p>Score every continuation by cumulative probability:</p><div class="vmath">$$\\text{A dog}=0.5(0.6)=0.30 \\qquad \\text{The dog}=0.4(0.5)=0.20$$$$\\text{The cat}=0.4(0.4)=0.16 \\qquad \\text{A cat}=0.5(0.3)=0.15$$</div><p>Keep the top K = 2 <strong>globally</strong>: <strong>("A dog") and ("The dog")</strong>. Note both survivors come from different parents — beam search does not reserve a slot per beam.</p>`},
+ {type:"multi", stem:"Which statements about perplexity (PPL) for a sequence of N words are true?",
+  opts:["PPL is defined as <span>$P(w_1,\\ldots,w_N)^{-1/N}$</span>","The lowest value of PPL occurs when <span>$P(w_1,\\ldots,w_N)$</span> is 0","The lowest value of PPL occurs when <span>$P(w_1,\\ldots,w_N)$</span> is 1","A higher PPL indicates a better-performing language model","Perplexity cannot be greater than the size of the vocabulary"], ans:[0,2,4],
+  exp:`<p><strong>(b) is false</strong> — as <span>$P \\to 0$</span>, <span>$P^{-1/N} \\to \\infty$</span>. Zero probability is the <em>worst</em> case.</p><p><strong>(d) is false</strong> — lower perplexity is better; it means less uncertainty per token.</p><p><strong>(e) is true</strong> — the worst reasonable model predicts uniformly over the vocabulary, giving PPL = |V|. Anything worse means the model is actively assigning below-uniform probability to the truth.</p><p>Sep '25 Q143.</p>`}
+]},
+
+{
+id:"gan", name:"GANs",
+lede:"Roughly a fifth of the marks. Most questions show a broken training loop — learn the loop as a fixed checklist and these become mechanical.",
+blocks:[
+ {t:"concept", h:"Two networks, two separate updates", html:`
+  <p>A GAN alternates between updating the discriminator and updating the generator. Each update has its own optimizer, its own loss, and its own rule about gradient flow. Almost every exam question puts a defect in one of those three places.</p>
+  <p><strong>Discriminator step.</strong> D must learn that real images are real and fake images are fake. So it needs both losses — <code>criterion(D(real), real_labels)</code> and <code>criterion(D(fake), fake_labels)</code> — and it <strong>sums</strong> them. Critically, the fake images must be <code>.detach()</code>ed, otherwise backprop travels through the generator and corrupts it during D's turn.</p>
+  <p><strong>Generator step.</strong> G wants D to be fooled, so it minimises <code>criterion(D(fake), real_labels)</code> — labelling its own fakes as real. This is the non-saturating loss. Here the fakes must <strong>not</strong> be detached, since the whole point is for the gradient to reach G.</p>`},
+ {t:"fx", items:[
+  {label:"The universal PyTorch update order", tex:"\\texttt{zero\\_grad()} \\;\\longrightarrow\\; \\texttt{backward()} \\;\\longrightarrow\\; \\texttt{step()}", note:"Any question offering a different ordering is offering a wrong answer."},
+  {label:"Discriminator loss", tex:"\\mathcal{L}_D = \\text{BCE}(D(x),\\,1) \\;+\\; \\text{BCE}(D(G(z)^{\\text{detached}}),\\,0)", note:"Sum. Never subtract, never take a ratio."},
+  {label:"Generator loss (non-saturating)", tex:"\\mathcal{L}_G = \\text{BCE}(D(G(z)),\\,1)", note:"Labels are REAL here — G is trying to fool D. No detach."},
+  {label:"Latent noise for a fully-connected GAN", tex:"z = \\texttt{torch.randn(batch\\_size,\\;latent\\_size).to(device)}", note:"Batch dimension first; randn (Gaussian) not rand (uniform); no trailing (1,1) — that 4-D form is for DCGAN's ConvTranspose2d."},
+  {label:"Nash equilibrium", tex:"D(G(z)) = 0.5", note:"A perfectly trained GAN leaves the discriminator unable to do better than guessing."}
+ ]},
+ {t:"worked", h:"Worked numerical — gradient accumulation across iterations", steps:[
+  {p:"A GAN training loop resets gradients with <code>d_optimizer.zero_grad()</code> only — the generator is never reset. Learning rate α = 0.01."},
+  {p:"Iteration 1: <span>$\\nabla_{\\theta_D}\\mathcal{L}_D = 0.6$</span>, <span>$\\nabla_{\\theta_G}\\mathcal{L}_G = 0.5$</span>. Iteration 2: <span>$\\nabla_{\\theta_D} = 0.4$</span>, <span>$\\nabla_{\\theta_G} = 0.2$</span>. Find the effective update after iteration 2."},
+  {p:"The discriminator <em>is</em> reset each iteration, so it sees only its fresh gradient:", tex:"\\theta_D \\leftarrow \\theta_D - 0.01(0.4) = \\theta_D - 0.004"},
+  {p:"The generator is <strong>never</strong> reset, so PyTorch accumulates its gradients across both iterations:", tex:"0.5 + 0.2 = 0.7"},
+  {p:"", tex:"\\theta_G \\leftarrow \\theta_G - 0.01(0.7) = \\theta_G - 0.007", res:"θ_D − 0.004 · θ_G − 0.007"},
+  {p:"Jan '26 Q14. PyTorch <em>always</em> accumulates gradients into <code>.grad</code> — <code>zero_grad()</code> is the only thing that clears them."}
+ ]},
+ {t:"traps", items:[
+  "<code>.detach()</code> belongs in the <strong>discriminator</strong> step and is fatal in the <strong>generator</strong> step — it severs the gradient path G needs.",
+  "The generator's loss uses <strong>real_labels</strong>. Using fake_labels makes G optimise for producing obvious fakes.",
+  "The two discriminator losses are <strong>added</strong>. Subtracting or dividing them is always a listed wrong option.",
+  "\"Which line is buggy?\" can legitimately answer <strong>none of them</strong> — Jan '26 Q6 showed a correct discriminator and offered three plausible fixes.",
+  "<code>torch.randn</code> (Gaussian) not <code>torch.rand</code> (uniform), and the batch dimension comes first."
+ ]}
+],
+qs:[
+ {type:"mcq", stem:"Which snippet correctly generates the latent noise for training a <strong>fully connected</strong> GAN?",
+  opts:["<code>z = torch.randn(latent_size, batch_size).to(device)</code>","<code>z = torch.randn(batch_size, latent_size).to(device)</code>","<code>z = torch.rand(batch_size, latent_size).to(device)</code>","<code>z = torch.randn((batch_size, latent_size, 1, 1)).to(device)</code>"], ans:1,
+  exp:`<p>(a) has the dimensions reversed — batch always comes first. (c) uses <code>rand</code>, which samples uniformly from [0,1); GAN latents are Gaussian. (d) is the 4-D DCGAN form, needed by <code>ConvTranspose2d</code> but wrong for a <code>Linear</code> generator.</p><p>Jan '26 Q4.</p>`},
+ {type:"multi", stem:"<pre>outputs = discriminator(images)\nd_loss_real = criterion(outputs, real_labels)\n\noutputs = discriminator(fake_images)\nd_loss_fake = criterion(outputs, real_labels)\n\nd_loss = d_loss_real - d_loss_fake\nd_loss.backward()\nd_optimizer.step()</pre><p>This discriminator update does not work as intended. Select <strong>all</strong> genuine flaws.</p>",
+  opts:["A gradient reset (<code>zero_grad()</code>) must be added before the backward pass","The fake loss should use <code>fake_labels</code> instead of <code>real_labels</code>","<code>fake_images</code> should be detached from the generator graph using <code>.detach()</code>","The ratio of the two losses should be used to compute the final discriminator loss"], ans:[0,1,2],
+  exp:`<p><strong>(a)</strong> Without <code>zero_grad()</code>, last iteration's gradients still sit in <code>.grad</code> and get added to this one's.</p><p><strong>(b)</strong> The discriminator must be told fakes are fake. Labelling them real teaches it the opposite of its job.</p><p><strong>(c)</strong> Without <code>.detach()</code>, <code>backward()</code> propagates into the generator and pollutes <code>G.grad</code> during D's turn.</p><p><strong>(d) is not a flaw</strong> — but the code's <code>-</code> is. The correct combination is a <em>sum</em>; a ratio is not the fix.</p><p>Jan '26 Q15.</p>`},
+ {type:"mcq", stem:"<pre>z = torch.randn(batch_size, latent_size).to(device)\nfake_images = G(z)\nd_out = D(fake_images.detach())        # line 1\ng_loss = criterion(d_out, real_labels)\ng_optimizer.zero_grad()\ng_loss.backward()\ng_optimizer.step()</pre><p>The generator never improves. What is wrong?</p>",
+  opts:["The optimizer order should be backward → step → zero_grad","Line 1: <code>.detach()</code> must be removed — it severs the gradient path back to the generator","The loss should use <code>fake_labels</code>","<code>randn</code> should be <code>rand</code>"], ans:1,
+  exp:`<p><code>.detach()</code> cuts the graph at <code>fake_images</code>. When <code>g_loss.backward()</code> runs, the gradient stops there and never reaches G's weights, so <code>G.grad</code> stays empty and <code>step()</code> does nothing.</p><p>Detaching is <strong>correct in the discriminator step</strong> and <strong>fatal in the generator step</strong> — same call, opposite verdict depending on whose turn it is.</p>`},
+ {type:"mcq", stem:"<pre># 3. Update weights\nG_optimizer.step()      # Line 3a\ng_loss.backward()       # Line 3b\nG.zero_grad()           # Line 3c</pre><p>What is the correct functional order for lines 3a, 3b and 3c?</p>",
+  opts:["3a (step), 3b (backward), 3c (zero_grad)","3b (backward), 3c (zero_grad), 3a (step)","3c (zero_grad), 3b (backward), 3a (step)","3b (backward), 3a (step), 3c (zero_grad)"], ans:2,
+  exp:`<p>Clear stale gradients, compute new ones, then apply them: <strong>zero_grad → backward → step</strong>.</p><p>Option (b) computes gradients and then immediately erases them, so <code>step()</code> applies nothing. Option (d) works by accident on iteration 1 but leaves gradients uncleared for iteration 2.</p>`},
+ {type:"mcq", stem:"After 100 epochs your generator loss is very low and stable, the discriminator loss is high and stable, and the generator outputs the <em>same</em> image for every latent vector <code>z</code>. What is this failure called?",
+  opts:["Vanishing gradients","Mode collapse","Overfitting","Discriminator saturation"], ans:1,
+  exp:`<p>The generator has found one output that reliably fools the discriminator and has stopped exploring the data distribution. The signature is exactly what's described: low stable G loss, and no diversity across different <code>z</code>.</p><p>Related but distinct: a latent space with <em>too few dimensions</em> also reduces diversity, but as a capacity limit rather than a training collapse.</p>`},
+ {type:"mcq", stem:"At Nash equilibrium in a perfectly trained GAN, what is the expected output of the discriminator <span>$D(G(z))$</span> for a generated sample?",
+  opts:["0","0.25","0.5","1"], ans:2,
+  exp:`<p>At equilibrium the generator's distribution matches the real data distribution exactly. The discriminator therefore has no information to distinguish them and outputs 0.5 — a coin flip — for every input.</p><p>D(G(z)) = 0 would mean D wins completely; = 1 would mean G fools it perfectly. Neither is equilibrium.</p>`},
+ {type:"mcq", stem:"What happens if a GAN's latent space has too few dimensions for the complexity of the task?",
+  opts:["Training becomes faster and results improve","The discriminator becomes too powerful","The generator memorises all training images","Generated images lack diversity and may look similar"], ans:3,
+  exp:`<p>The latent vector is the only source of variation the generator has. Too few dimensions means too few degrees of freedom to encode the real distribution's variety, so outputs cluster together.</p>`},
+ {type:"num", stem:"A GAN loop calls <code>zero_grad()</code> only for the generator. Learning rate α = 0.02. Discriminator gradients are 0.3 in iteration 1 and 0.5 in iteration 2. What is the magnitude of the discriminator's parameter change applied at iteration 2? Answer to 3 decimals.", ans:0.016, tol:0.0005,
+  exp:`<p>The discriminator is never reset, so its gradients accumulate:</p><div class="vmath">$$0.3 + 0.5 = 0.8 \\qquad \\Delta\\theta_D = 0.02 \\times 0.8 = 0.016$$</div><p>This is the mirror image of Jan '26 Q14 — check carefully <em>which</em> network's <code>zero_grad()</code> is missing.</p>`}
+]},
+
+{
+id:"pytorch", name:"PyTorch semantics",
+lede:"Short, factual questions about what specific calls actually do. Each is a mark you either have instantly or don't.",
+blocks:[
+ {t:"concept", h:"What the common calls really do", html:`
+  <p><code>model.train()</code> and <code>model.eval()</code> flip a mode flag that changes the behaviour of exactly two kinds of layer: <strong>Dropout</strong> (active vs pass-through) and <strong>BatchNorm</strong> (batch statistics vs running statistics). They do not touch gradients, parameters, or the optimizer.</p>
+  <p><code>optimizer.zero_grad()</code> clears accumulated gradients. This is a separate concern from train/eval mode, and confusing the two is a listed distractor in Jan '26 Q2.</p>
+  <p><code>.numpy()</code> on a CUDA tensor raises <code>RuntimeError</code>. NumPy operates on CPU memory and cannot address the GPU. The fix is <code>.cpu().numpy()</code>.</p>
+  <p><strong>Broadcasting</strong> is worth being fluent in: reducing a (2,3) tensor along <code>dim=1</code> yields shape (2,), which then adds element-wise to a length-2 bias.</p>`},
+ {t:"fx", items:[
+  {label:"Clamping", tex:"\\texttt{torch.clamp}(x,\\min=a,\\max=b)_i = \\begin{cases} a & x_i < a\\\\ x_i & a \\le x_i \\le b\\\\ b & x_i > b \\end{cases}"},
+  {label:"Reduction axes", tex:"\\texttt{sum(dim=0)}\\;\\to\\;\\text{collapse rows}\\qquad \\texttt{sum(dim=1)}\\;\\to\\;\\text{collapse columns}", note:"dim=k removes axis k. For a (2,3) tensor, sum(dim=1) gives shape (2,) — one value per row."},
+  {label:"Huber loss", tex:"L_\\delta(e) = \\begin{cases} \\frac{1}{2}e^2 & |e| \\le \\delta \\\\ \\delta\\left(|e| - \\frac{1}{2}\\delta\\right) & |e| > \\delta\\end{cases}", note:"Quadratic for small errors, linear for large ones. The linear tail caps an outlier's gradient contribution."}
+ ]},
+ {t:"worked", h:"Worked numerical — chaining clamp, sum and broadcast", steps:[
+  {p:"Given <code>x = torch.tensor([[-2.5,-1.0,0.5],[1.2,3.5,6.0]])</code>, then <code>y = torch.clamp(x, min=0.0, max=4.0)</code>, <code>z = y.sum(dim=1)</code>, <code>z_biased = z + torch.tensor([1.0,-1.0])</code>."},
+  {p:"Clamp element-wise into [0, 4]:", tex:"\\begin{bmatrix}-2.5 & -1.0 & 0.5\\\\ 1.2 & 3.5 & 6.0\\end{bmatrix} \\longrightarrow \\begin{bmatrix}0 & 0 & 0.5\\\\ 1.2 & 3.5 & 4.0\\end{bmatrix}"},
+  {p:"<code>sum(dim=1)</code> collapses columns, giving one value per row:", tex:"z = [\\,0+0+0.5,\\;\\; 1.2+3.5+4.0\\,] = [0.5,\\;8.7]"},
+  {p:"Add the bias positionally:", tex:"[0.5+1.0,\\;\\; 8.7-1.0] = [1.5,\\;7.7]", res:"tensor([1.5000, 7.7000])"},
+  {p:"Jan '26 Q5. Note 6.0 clipped to 4.0 and −2.5 to 0 — losing either clip changes the answer to a listed distractor."}
+ ]},
+ {t:"traps", items:[
+  "<code>model.train()</code> does <strong>not</strong> enable gradients, reset parameters, or clear gradients. All three appear as wrong options.",
+  "<code>.numpy()</code> on a GPU tensor <strong>raises</strong> — it does not silently copy to CPU.",
+  "<code>sum(dim=1)</code> removes axis 1, so a (2,3) tensor becomes shape (2,), not (3,).",
+  "Huber's robustness comes from the <strong>linear tail</strong>, not from ignoring or zeroing large errors."
+ ]}
+],
+qs:[
+ {type:"mcq", stem:"<pre>for epoch in range(epochs):\n    model_0.train()\n    y_pred = model_0(X_train)\n    loss = loss_fn(y_pred, y_train)\n    optimizer.zero_grad()\n    loss.backward()\n    optimizer.step()</pre><p>Why is <code>model_0.train()</code> called inside the training loop?</p>",
+  opts:["It enables gradient computation","It resets the model parameters every epoch","It clears previously stored gradients","It ensures layers like Dropout and BatchNorm behave correctly during training"], ans:3,
+  exp:`<p><code>train()</code> sets a mode flag. Dropout becomes active; BatchNorm uses the current batch's statistics rather than stored running averages.</p><p>Gradients are always tracked (unless inside <code>torch.no_grad()</code>), parameters are never reset, and clearing gradients is <code>zero_grad()</code>'s job — that call is already there on the next line.</p><p>Jan '26 Q2.</p>`},
+ {type:"mcq", stem:"<pre>gpu_tensor = torch.tensor([1,2,3]).to('cuda')\nnumpy_array = gpu_tensor.numpy()</pre><p>What is the outcome?</p>",
+  opts:["It converts <code>gpu_tensor</code> to a NumPy array on the CPU","It converts it to a NumPy array that also resides on the GPU","It raises a <code>RuntimeError</code> because NumPy cannot operate on GPU memory","It creates a CPU view of the tensor without copying data"], ans:2,
+  exp:`<p>NumPy has no concept of device memory — it addresses host RAM only. PyTorch refuses rather than silently performing an expensive transfer, so you must be explicit: <code>gpu_tensor.cpu().numpy()</code>.</p><p>Note the last option ("The numpy() method is not available for GPU tensors") is subtly wrong too — the method exists and is callable; it just throws.</p>`},
+ {type:"mcq", stem:"<pre>x = torch.tensor([[1.0,-2.0,3.0],\n                  [0.5, 4.0,-1.0]])\ny = torch.clamp(x, min=-1.0, max=2.0)\nz = y.sum(dim=1)\nout = z + torch.tensor([-0.5, 1.0])</pre><p>What is <code>out</code>?</p>",
+  opts:["<code>tensor([2.0000, 1.5000])</code>","<code>tensor([1.5000, 2.5000])</code>","<code>tensor([1.5000, 4.5000])</code>","<code>tensor([2.5000, 1.5000])</code>"], ans:1,
+  exp:`<p>Clamp into [−1, 2]:</p><div class="vmath">$$\\begin{bmatrix}1.0 & -2.0 & 3.0\\\\ 0.5 & 4.0 & -1.0\\end{bmatrix} \\to \\begin{bmatrix}1.0 & -1.0 & 2.0\\\\ 0.5 & 2.0 & -1.0\\end{bmatrix}$$</div><p>Sum along dim=1 (per row): <span>$[2.0,\\;1.5]$</span>. Add the bias positionally: <span>$[2.0-0.5,\\;1.5+1.0] = [1.5,\\;2.5]$</span>.</p>`},
+ {type:"mcq", stem:"What makes Huber Loss robust to outliers compared to MSE?",
+  opts:["It always produces a gradient of zero for all errors","It uses a quadratic penalty only for errors exactly at the threshold","It transitions from quadratic loss for small errors to linear loss for large errors, down-weighting outliers","It entirely ignores errors beyond a certain delta"], ans:2,
+  exp:`<p>Under MSE the gradient grows linearly with the error, so a single wild outlier can dominate the update. Huber's linear tail means the gradient <em>saturates</em> at δ — the outlier still contributes, but with bounded influence.</p><p>Option (d) is the trap: Huber down-weights large errors, it does not discard them.</p>`}
+]},
+
+{
+id:"convex", name:"Convexity",
+lede:"A second-derivative check with two reliable traps. Fast marks once the table is memorised.",
+blocks:[
+ {t:"concept", h:"The test and its edge cases", html:`
+  <p>A twice-differentiable function is convex on an interval when <span>$f''(x) \\ge 0$</span> everywhere on it. Geometrically: the chord between any two points lies on or above the curve.</p>
+  <p>Two edge cases produce most of the lost marks:</p>
+  <ul>
+   <li><strong>Non-differentiable points do not disqualify.</strong> <span>$|x|$</span> and ReLU both have a kink at the origin and both are convex. The chord test still passes.</li>
+   <li><strong>A second derivative that touches zero is fine.</strong> <span>$x^4$</span> has <span>$f''(0)=0$</span> and is still convex. It must actually go <em>negative</em> somewhere to break convexity.</li>
+  </ul>
+  <p>And the sign trap: <span>$\\ln(x)$</span> is <strong>concave</strong>, but <span>$-\\ln(x)$</span> is convex.</p>`},
+ {t:"fx", items:[
+  {label:"Second-derivative test", tex:"f \\text{ convex on } I \\iff f''(x) \\ge 0 \\;\\;\\forall x \\in I"},
+  {label:"Reference table", tex:"\\begin{array}{lll} x^2 & f''=2 & \\text{convex}\\\\ e^x & f''=e^x>0 & \\text{convex}\\\\ |x| & \\text{kink at }0 & \\text{convex}\\\\ e^{w}+e^{-w} & f''=e^{w}+e^{-w}>0 & \\text{convex}\\\\ x^4-3x^2 & f''=12x^2-6 & \\textbf{not convex}\\\\ \\ln x,\\,x>0 & f''=-1/x^2<0 & \\textbf{concave}\\\\ \\sin x & \\text{sign-changing} & \\textbf{not convex} \\end{array}"}
+ ]},
+ {t:"traps", items:[
+  "<span>$|x|$</span> and ReLU <strong>are convex</strong> despite the kink.",
+  "<span>$\\ln(x)$</span> is concave; <span>$-\\ln(x)$</span> is convex. Check the sign before answering.",
+  "<span>$f''$</span> merely <em>approaching</em> zero (as <span>$e^{-w}$</span> does at large w) does not break convexity — an option arguing this is a distractor in Sep '25 Q138.",
+  "<span>$x^4 - 3x^2$</span> looks like an even polynomial but the <span>$-3x^2$</span> makes <span>$f''$</span> negative near the origin."
+ ]}
+],
+qs:[
+ {type:"multi", stem:"Select <strong>all</strong> functions that are convex over their natural domains.",
+  opts:["<span>$f(x)=x^2$</span>","<span>$f(x)=e^x$</span>","<span>$f(x)=x^4-3x^2$</span>","<span>$f(x)=\\ln(x),\\;x>0$</span>","<span>$f(x)=|x|$</span>","<span>$f(x)=\\sin(x),\\;x\\in\\mathbb{R}$</span>"], ans:[0,1,4],
+  exp:`<p><span>$x^2$</span>: <span>$f''=2>0$</span> ✓ &nbsp;·&nbsp; <span>$e^x$</span>: <span>$f''=e^x>0$</span> ✓ &nbsp;·&nbsp; <span>$|x|$</span>: convex despite the kink ✓</p><p><span>$x^4-3x^2$</span>: <span>$f''=12x^2-6$</span>, which is negative for <span>$|x|<1/\\sqrt2$</span> ✗</p><p><span>$\\ln x$</span>: <span>$f''=-1/x^2<0$</span>, concave ✗ &nbsp;·&nbsp; <span>$\\sin x$</span>: <span>$f''=-\\sin x$</span> changes sign ✗</p><p>Jan '26 Q13.</p>`},
+ {type:"multi", stem:"Select <strong>all</strong> convex functions.",
+  opts:["<span>$f(x)=x^4$</span>","<span>$f(x)=-\\ln(x),\\;x>0$</span>","<span>$f(x)=x^3$</span>","<span>$f(x)=\\max(0,x)$</span> (ReLU)","<span>$f(x)=\\tanh(x)$</span>","<span>$f(x)=e^{-x}$</span>"], ans:[0,1,3,5],
+  exp:`<p><span>$x^4$</span>: <span>$f''=12x^2\\ge0$</span> — zero at the origin but never negative ✓</p><p><span>$-\\ln x$</span>: <span>$f''=+1/x^2>0$</span> ✓ (the negation of a concave function is convex)</p><p><span>$x^3$</span>: <span>$f''=6x$</span>, negative for <span>$x<0$</span> ✗</p><p>ReLU: convex, kink irrelevant ✓ &nbsp;·&nbsp; <span>$\\tanh$</span>: concave for <span>$x>0$</span> ✗ &nbsp;·&nbsp; <span>$e^{-x}$</span>: <span>$f''=e^{-x}>0$</span> ✓</p>`},
+ {type:"mcq", stem:"Given <span>$A(w)=w^2-6w+10$</span> and <span>$B(w)=e^{w}+e^{-w}$</span>, which statement is correct?",
+  opts:["A is non-convex; B is convex because <span>$B''>0$</span> at <span>$w=0$</span>","A is convex; B is non-convex because <span>$B''$</span> approaches zero as <span>$w\\to\\infty$</span>","Both are convex because their second derivatives are positive for all <span>$w\\in\\mathbb{R}$</span>","Both are convex because their first derivatives are continuous"], ans:2,
+  exp:`<div class="vmath">$$A''(w) = 2 > 0 \\qquad B''(w) = e^{w}+e^{-w} > 0$$</div><p>Both hold for every real <span>$w$</span>, so both are convex.</p><p>Option (b) is the interesting distractor: <span>$B''$</span> never approaches zero (as <span>$w\\to\\infty$</span> the <span>$e^w$</span> term diverges), and even if it did, approaching zero without crossing it preserves convexity. Option (d) is wrong because continuous first derivatives are neither necessary nor sufficient — <span>$|x|$</span> is convex without one, and <span>$x^3$</span> has one without being convex.</p><p>Sep '25 Q138.</p>`}
+]},
+
+{
+id:"sgd", name:"Manual gradient descent",
+lede:"Two setups cover every version asked: a linear neuron with squared loss, and a sigmoid neuron with cross-entropy. The second has a shortcut worth memorising.",
+blocks:[
+ {t:"concept", h:"The cancellation worth knowing", html:`
+  <p>For a linear unit under squared error the derivative is direct. For a <strong>sigmoid unit under binary cross-entropy</strong> something elegant happens: the sigmoid's derivative <span>$\\sigma(1-\\sigma)$</span> exactly cancels the denominator of the BCE derivative, and the whole chain collapses to</p>
+  <p style="text-align:center"><strong>∂L/∂z = ŷ − y</strong></p>
+  <p>That is the entire gradient computation. From there, <span>$\\partial L/\\partial w_i = (\\hat y - y)x_i$</span> — one multiplication per weight. Computing <span>$\\sigma'$</span> separately gets the same answer with four extra opportunities to drop a sign.</p>
+  <p><strong>Always sanity-check the direction.</strong> If the prediction is too high, weights on positive inputs must decrease. If your signs contradict that, you've lost a minus.</p>`},
+ {t:"fx", items:[
+  {label:"Linear unit, squared loss", tex:"\\hat y = wx,\\quad L=\\tfrac12(\\hat y - y)^2 \\;\\Longrightarrow\\; \\frac{\\partial L}{\\partial w} = (\\hat y - y)\\,x"},
+  {label:"Sigmoid unit, binary cross-entropy — the collapse", tex:"\\frac{\\partial L}{\\partial z} = \\hat y - y \\qquad\\Longrightarrow\\qquad \\frac{\\partial L}{\\partial w_i} = (\\hat y - y)\\,x_i"},
+  {label:"Update rule", tex:"w \\leftarrow w - \\eta\\,\\frac{\\partial L}{\\partial w}"},
+  {label:"Sigmoid", tex:"\\sigma(z) = \\frac{1}{1+e^{-z}} \\qquad \\sigma(0)=0.5,\\;\\; \\sigma(-0.5)\\approx0.3775,\\;\\; \\sigma(1)\\approx0.7311"}
+ ]},
+ {t:"worked", h:"Worked numerical — one SGD step on a sigmoid neuron", steps:[
+  {p:"Inputs <span>$x_1=1$</span>, <span>$x_2=2$</span>; weights <span>$w_1=0.5$</span>, <span>$w_2=-0.5$</span>; no bias; target <span>$y=1$</span>; <span>$\\eta=0.1$</span>."},
+  {p:"Forward pass:", tex:"z = 0.5(1) + (-0.5)(2) = 0.5 - 1.0 = -0.5 \\qquad \\hat y = \\sigma(-0.5) = 0.3775"},
+  {p:"Apply the collapse — no chain rule needed:", tex:"\\frac{\\partial L}{\\partial z} = \\hat y - y = 0.3775 - 1 = -0.6225"},
+  {p:"Multiply by each input:", tex:"\\frac{\\partial L}{\\partial w_1} = -0.6225(1) = -0.6225 \\qquad \\frac{\\partial L}{\\partial w_2} = -0.6225(2) = -1.2450"},
+  {p:"Update:", tex:"w_1 \\leftarrow 0.5 + 0.06225 = 0.5622 \\qquad w_2 \\leftarrow -0.5 + 0.1245 = -0.3755", res:"w₁ = 0.5622 · w₂ = −0.3755"},
+  {p:"Direction check: gradients are negative, so both weights <em>increase</em>. Correct — we want <span>$\\hat y$</span> to rise from 0.38 toward the target of 1. Jan '26 Q21–22."}
+ ]},
+ {t:"traps", items:[
+  "The update <em>subtracts</em> the gradient. A negative gradient therefore <strong>increases</strong> the weight — options with flipped signs are always offered.",
+  "<span>$\\partial L/\\partial w_i$</span> is multiplied by <span>$x_i$</span>, so different inputs give different gradients even with equal weights.",
+  "With <span>$L=\\tfrac12(\\hat y-y)^2$</span> the factor of <span>$\\tfrac12$</span> cancels; without it you'd carry a factor of 2.",
+  "Always sanity-check that the weights move in the direction that reduces the error."
+ ]}
+],
+qs:[
+ {type:"num", stem:"A network is a direct connection <span>$x \\xrightarrow{\\;w\\;} \\hat y$</span> with linear activation. Given <span>$w=0.2$</span>, <span>$x=5$</span>, <span>$y=3$</span>, <span>$L=\\tfrac12(\\hat y - y)^2$</span> and <span>$\\eta=0.05$</span>, what is the new value of <span>$w$</span> after one gradient descent update?", ans:0.7, tol:0.05,
+  exp:`<div class="vmath">$$\\hat y = 0.2(5) = 1 \\qquad \\frac{\\partial L}{\\partial w} = (\\hat y - y)x = (1-3)(5) = -10$$</div><div class="vmath">$$w \\leftarrow 0.2 - 0.05(-10) = 0.2 + 0.5 = 0.7$$</div><p>Jan '26 Q10, accepted range 0.65 to 0.75. The prediction was 1 against a target of 3 — far too low — so <span>$w$</span> jumps up. That's the direction check passing.</p>`},
+ {type:"mcq", stem:"A sigmoid neuron with BCE loss, no bias: <span>$x_1=2$</span>, <span>$x_2=-1$</span>, <span>$w_1=0.3$</span>, <span>$w_2=0.6$</span>, target <span>$y=0$</span>. What are the gradients at the first iteration?",
+  opts:["<span>$\\partial L/\\partial w_1=1.00,\\;\\partial L/\\partial w_2=-0.50$</span>","<span>$\\partial L/\\partial w_1=-1.00,\\;\\partial L/\\partial w_2=0.50$</span>","<span>$\\partial L/\\partial w_1=0.50,\\;\\partial L/\\partial w_2=-0.25$</span>","<span>$\\partial L/\\partial w_1=0.25,\\;\\partial L/\\partial w_2=-0.125$</span>"], ans:0,
+  exp:`<div class="vmath">$$z = 0.3(2)+0.6(-1) = 0.6-0.6 = 0 \\qquad \\hat y = \\sigma(0) = 0.5$$</div><div class="vmath">$$\\frac{\\partial L}{\\partial z} = \\hat y - y = 0.5 - 0 = 0.5$$</div><div class="vmath">$$\\frac{\\partial L}{\\partial w_1} = 0.5(2) = 1.00 \\qquad \\frac{\\partial L}{\\partial w_2} = 0.5(-1) = -0.50$$</div><p>Option (c) is what you get if you multiply by <span>$\\sigma'(0)=0.25$</span> as well — the mistake the collapse exists to prevent.</p>`},
+ {type:"mcq", stem:"Continuing the previous question with <span>$\\eta = 0.5$</span>, what are the updated weights after one SGD step?",
+  opts:["<span>$w_1=0.80,\\;w_2=0.35$</span>","<span>$w_1=-0.20,\\;w_2=0.85$</span>","<span>$w_1=0.30,\\;w_2=0.60$</span>","<span>$w_1=-0.70,\\;w_2=1.10$</span>"], ans:1,
+  exp:`<div class="vmath">$$w_1 \\leftarrow 0.3 - 0.5(1.00) = -0.20 \\qquad w_2 \\leftarrow 0.6 - 0.5(-0.50) = 0.85$$</div><p>Direction check: the target is 0 but the neuron output 0.5, so <span>$z$</span> must fall. <span>$x_1$</span> is positive so <span>$w_1$</span> decreases ✓. <span>$x_2$</span> is <em>negative</em>, so <span>$w_2$</span> must <em>increase</em> to push <span>$z$</span> down ✓. Option (a) is the sign-flipped version.</p>`},
+ {type:"num", stem:"A sigmoid neuron with BCE loss has a single input <span>$x=4$</span>, weight <span>$w=0$</span>, no bias, target <span>$y=1$</span>, and <span>$\\eta=0.25$</span>. What is <span>$w$</span> after one SGD step? Answer to 2 decimals.", ans:0.5, tol:0.02,
+  exp:`<div class="vmath">$$z = 0(4) = 0 \\qquad \\hat y = \\sigma(0) = 0.5 \\qquad \\hat y - y = -0.5$$</div><div class="vmath">$$\\frac{\\partial L}{\\partial w} = -0.5(4) = -2 \\qquad w \\leftarrow 0 - 0.25(-2) = 0.50$$</div><p>The weight increases, raising <span>$\\hat y$</span> toward the target of 1 — direction check passes.</p>`}
+]}
+];
+
+/* ============================== STATE ============================== */
+let cur = 0;
+const state = {};          // qid -> {picked, correct, checked}
+const TOTAL = T.reduce((s,t)=>s+t.qs.length,0);
+
+const qid = (ti,qi)=>T[ti].id+":"+qi;
+
+/* ============================== HELPERS ============================== */
+function typeset(el){
+  if(!window.renderMathInElement) return;
+  try{
+    renderMathInElement(el,{
+      delimiters:[
+        {left:"$$",right:"$$",display:true},
+        {left:"$",right:"$",display:false}
+      ],
+      throwOnError:false
+    });
+  }catch(e){}
+}
+function tex(el,str,display){
+  if(!window.katex){ el.textContent = str; return; }
+  try{ katex.render(str, el, {displayMode:!!display, throwOnError:false}); }
+  catch(e){ el.textContent = str; }
+}
+function el(tag,cls,html){
+  const n=document.createElement(tag);
+  if(cls) n.className=cls;
+  if(html!=null) n.innerHTML=html;
+  return n;
+}
+
+/* ============================== PROGRESS ============================== */
+function topicStat(ti){
+  const t=T[ti]; let ans=0, ok=0;
+  t.qs.forEach((q,qi)=>{
+    const s=state[qid(ti,qi)];
+    if(s&&s.checked){ans++; if(s.correct)ok++;}
+  });
+  return {ans,ok,total:t.qs.length};
+}
+function updateProgress(){
+  let ans=0, ok=0;
+  T.forEach((t,ti)=>{const s=topicStat(ti); ans+=s.ans; ok+=s.ok;});
+  const pct = ans? Math.round(ok/ans*100) : 0;
+  const pctEl=document.getElementById("pct");
+  const fillEl=document.getElementById("fill");
+  pctEl.textContent = ans? pct+"%" : "—";
+  fillEl.style.width = (ans? pct : 0)+"%";
+  fillEl.classList.toggle("hit", pct>=95 && ans>=10);
+  let note = ans+" of "+TOTAL+" answered";
+  if(ans>=10 && pct>=95) note += " · target met";
+  else if(ans>=10) note += " · "+(Math.ceil((0.95*ans-ok)/0.05)||1)+" more in a row to hit 95";
+  document.getElementById("mnote").textContent = note;
+
+  document.querySelectorAll(".navdot").forEach((d,i)=>{
+    const s=topicStat(i);
+    d.className="navdot"+(s.ans===0?"":(s.ans===s.total&&s.ok===s.total?" done":" part"));
+  });
+}
+
+/* ============================== NAV ============================== */
+function buildNav(){
+  const nav=document.getElementById("nav");
+  const mob=document.getElementById("mobbar");
+  nav.innerHTML=""; mob.innerHTML="";
+  T.forEach((t,i)=>{
+    const b=el("button","navitem"+(i===cur?" on":""));
+    b.innerHTML='<span class="navnum">'+String(i+1).padStart(2,"0")+'</span>'+
+                '<span class="navname">'+t.name+'</span>'+
+                '<span class="navdot"></span>';
+    b.onclick=()=>go(i);
+    nav.appendChild(b);
+
+    const c=el("button","mobchip"+(i===cur?" on":""), String(i+1).padStart(2,"0")+" "+t.name);
+    c.onclick=()=>go(i);
+    mob.appendChild(c);
+  });
+}
+
+/* ============================== QUESTION RENDER ============================== */
+function renderQ(ti,qi){
+  const q=T[ti].qs[qi];
+  const id=qid(ti,qi);
+  if(!state[id]) state[id]={picked:(q.type==="multi"?[]:null),checked:false,correct:false};
+  const st=state[id];
+
+  const wrap=el("div","q");
+  const top=el("div","q-top");
+  top.appendChild(el("span","q-n","Q"+String(qi+1).padStart(2,"0")));
+  const stem=el("div","q-stem",q.stem + (q.type==="multi"?"":""));
+  top.appendChild(stem);
+  wrap.appendChild(top);
+
+  const verdict=el("div");
+
+  function showVerdict(){
+    verdict.innerHTML="";
+    if(!st.checked) return;
+    const v=el("div","verdict "+(st.correct?"ok":"no"));
+    v.appendChild(el("span","verdict-tag", st.correct?"Correct":"Not quite"));
+    v.appendChild(el("div",null,q.exp));
+    verdict.appendChild(v);
+    typeset(v);
+  }
+
+  if(q.type==="mcq"||q.type==="multi"){
+    const box=el("div","opts");
+    q.opts.forEach((o,oi)=>{
+      const b=el("button","opt");
+      b.innerHTML='<span class="opt-k">'+String.fromCharCode(97+oi)+'</span><span class="opt-t">'+o+'</span>';
+      b.onclick=()=>{
+        if(st.checked) return;
+        if(q.type==="mcq"){ st.picked=oi; }
+        else{
+          const k=st.picked.indexOf(oi);
+          if(k>=0) st.picked.splice(k,1); else st.picked.push(oi);
+        }
+        paint();
+      };
+      box.appendChild(b);
+    });
+    wrap.appendChild(box);
+
+    const bar=el("div","numrow");
+    const check=el("button","btn","Check answer");
+    check.onclick=()=>{
+      if(q.type==="mcq"){ if(st.picked==null) return; st.correct = st.picked===q.ans; }
+      else{
+        if(!st.picked.length) return;
+        const a=[...q.ans].sort().join(","), p=[...st.picked].sort().join(",");
+        st.correct = a===p;
+      }
+      st.checked=true; paint(); updateProgress();
+    };
+    bar.appendChild(check);
+    if(q.type==="multi") bar.appendChild(el("span","numunit","Select all that apply"));
+    wrap.appendChild(bar);
+
+    function paint(){
+      [...box.children].forEach((b,oi)=>{
+        b.className="opt";
+        b.disabled=st.checked;
+        const chosen = q.type==="mcq" ? st.picked===oi : st.picked.includes(oi);
+        if(!st.checked){ if(chosen) b.classList.add("sel"); }
+        else{
+          const isAns = q.type==="mcq" ? oi===q.ans : q.ans.includes(oi);
+          if(isAns) b.classList.add("right");
+          else if(chosen) b.classList.add("wrong");
+        }
+      });
+      check.disabled = st.checked;
+      check.textContent = st.checked ? "Checked" : "Check answer";
+      showVerdict();
+    }
+    wrap.appendChild(verdict);
+    setTimeout(paint,0);
+  }
+
+  else{ // numeric
+    const row=el("div","numrow");
+    const inp=el("input","numin");
+    inp.type="text"; inp.inputMode="decimal"; inp.placeholder="Your answer";
+    inp.value = st.picked!=null ? st.picked : "";
+    const check=el("button","btn","Check answer");
+    row.appendChild(inp); 
+    if(q.unit) row.appendChild(el("span","numunit",q.unit));
+    row.appendChild(check);
+    wrap.appendChild(row);
+    wrap.appendChild(verdict);
+
+    function paint(){
+      inp.disabled=st.checked;
+      check.disabled=st.checked;
+      check.textContent = st.checked ? "Checked" : "Check answer";
+      showVerdict();
+    }
+    check.onclick=()=>{
+      const raw=inp.value.trim();
+      if(raw==="") return;
+      const v=parseFloat(raw.replace(/[,%\s]/g,""));
+      if(isNaN(v)) return;
+      st.picked=raw;
+      st.correct = Math.abs(v-q.ans) <= (q.tol||0)+1e-9;
+      st.checked=true; paint(); updateProgress();
+    };
+    inp.onkeydown=(e)=>{ if(e.key==="Enter") check.click(); };
+    setTimeout(paint,0);
+  }
+  return wrap;
+}
+
+/* ============================== TOPIC RENDER ============================== */
+function render(){
+  const t=T[cur];
+  const m=document.getElementById("main");
+  m.innerHTML="";
+
+  const head=el("div","topichead");
+  head.appendChild(el("p","crumb","Topic "+String(cur+1).padStart(2,"0")+" of "+String(T.length).padStart(2,"0")));
+  head.appendChild(el("h1",null,t.name));
+  head.appendChild(el("p","lede",t.lede));
+  m.appendChild(head);
+
+  t.blocks.forEach(b=>{
+    if(b.t==="concept"){
+      const c=el("div","card");
+      c.appendChild(el("h2",null,b.h));
+      c.appendChild(el("div",null,b.html));
+      m.appendChild(c);
+    }
+    if(b.t==="fx"){
+      const c=el("div","card");
+      c.appendChild(el("h2",null,"Formulas"));
+      b.items.forEach(it=>{
+        const f=el("div","fx");
+        f.appendChild(el("p","fx-label",it.label));
+        const mm=el("div","fx-math");
+        tex(mm,it.tex,true);
+        f.appendChild(mm);
+        if(it.note) f.appendChild(el("p","fx-note",it.note));
+        c.appendChild(f);
+      });
+      m.appendChild(c);
+    }
+    if(b.t==="worked"){
+      const c=el("div","card worked");
+      c.appendChild(el("h2",null,b.h));
+      b.steps.forEach((s,i)=>{
+        const row=el("div","step");
+        row.appendChild(el("div","stepn",String(i+1)));
+        const body=el("div","stepbody");
+        if(s.p) body.appendChild(el("p",null,s.p));
+        if(s.tex){ const mm=el("div","stepmath"); tex(mm,s.tex,true); body.appendChild(mm); }
+        if(s.res) body.appendChild(el("div","result",s.res));
+        row.appendChild(body);
+        c.appendChild(row);
+      });
+      m.appendChild(c);
+    }
+    if(b.t==="traps"){
+      const c=el("div","card traps");
+      c.appendChild(el("h2",null,"Where marks get lost"));
+      const ul=el("ul");
+      b.items.forEach(x=>ul.appendChild(el("li",null,x)));
+      c.appendChild(ul);
+      m.appendChild(c);
+    }
+  });
+
+  const dh=el("div","drillhead");
+  dh.appendChild(el("h2",null,"Practice"));
+  const sc=el("span","drillscore");
+  dh.appendChild(sc);
+  m.appendChild(dh);
+
+  t.qs.forEach((q,qi)=>m.appendChild(renderQ(cur,qi)));
+
+  const pn=el("div","pagenav");
+  const prev=el("button","pagebtn", cur>0 ? "← "+T[cur-1].name : "← Start");
+  prev.disabled = cur===0;
+  prev.onclick=()=>go(cur-1);
+  const next=el("button","pagebtn", cur<T.length-1 ? T[cur+1].name+" →" : "End");
+  next.disabled = cur===T.length-1;
+  next.onclick=()=>go(cur+1);
+  pn.appendChild(prev); pn.appendChild(next);
+  m.appendChild(pn);
+
+  typeset(m);
+
+  const s=topicStat(cur);
+  sc.textContent = s.total+" questions";
+
+  updateProgress();
+}
+
+function go(i){
+  cur=i;
+  buildNav();
+  render();
+  window.scrollTo({top:0,behavior:"instant"});
+}
+
+/* ============================== BOOT ============================== */
+function boot(){ buildNav(); render(); }
+if(window.katex){ boot(); }
+else{
+  let tries=0;
+  const iv=setInterval(()=>{
+    tries++;
+    if(window.katex || tries>40){ clearInterval(iv); boot(); }
+  },100);
+}
+</script>
